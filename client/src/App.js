@@ -18,7 +18,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 
 // Admin Pages
-import UserManagement from './components/admin/UserManagement';
+import Users from './pages/admin/Users';
 
 function App() {
   return (
@@ -38,7 +38,7 @@ function App() {
               
               {/* Admin Routes */}
               <Route element={<AdminRoute />}>
-                <Route path="/admin/users" element={<UserManagement />} />
+                <Route path="/admin/users" element={<Users />} />
               </Route>
             </Route>
           </Route>
