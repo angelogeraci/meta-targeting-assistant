@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Navbar, Nav } from 'react-bootstrap';
+import { Container, Row, Col, Nav, Navbar, Badge, Card, ProgressBar } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import CountrySelector from './components/CountrySelector';
 import CategorySelector from './components/CategorySelector';
@@ -7,6 +7,7 @@ import ResultsTable from './components/ResultsTable';
 import LoadingSpinner from './components/LoadingSpinner';
 import socketService from './services/socket';
 import axios from 'axios';
+import { FaSearchLocation, FaLayerGroup, FaDatabase, FaChartLine, FaBell, FaQuestionCircle, FaCog, FaUser } from 'react-icons/fa';
 
 function App() {
   // États
@@ -225,88 +226,251 @@ function App() {
     setProcessStep('idle');
   };
 
+  // Calcul des statistiques
+  const calculerStatistiques = () => {
+    if (!results || results.length === 0) return null;
+
+    // Nombre de critères
+    const totalCritères = results.length;
+    
+    // Nombre de correspondances
+    const totalCorrespondances = results.reduce((sum, item) => sum + (item.matches ? item.matches.length : 0), 0);
+    
+    // Moyenne de correspondances par critère
+    const moyenneCorrespondances = totalCorrespondances / totalCritères;
+    
+    // Critère avec le plus de correspondances
+    const critèreMax = results.reduce((max, item) => 
+      (item.matches && item.matches.length > (max?.matches?.length || 0)) ? item : max, null);
+    
+    return {
+      totalCritères,
+      totalCorrespondances,
+      moyenneCorrespondances,
+      critèreMax
+    };
+  };
+
+  const statistics = calculerStatistiques();
+  const countryName = countries.find(c => c.code === selectedCountry)?.name || '';
+
   return (
     <div className="app">
-      <Navbar bg="dark" variant="dark" expand="lg">
+      <Navbar bg="primary" variant="dark" expand="lg">
         <Container>
-          <Navbar.Brand href="#home">Meta Targeting Assistant</Navbar.Brand>
+          <Navbar.Brand href="#home">
+            <FaSearchLocation className="me-2" />
+            Meta Targeting Assistant
+          </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              <Nav.Link href="https://github.com/angelogeraci/meta-targeting-assistant" target="_blank">
-                GitHub
-              </Nav.Link>
+              <Nav.Link href="#"><FaBell /></Nav.Link>
+              <Nav.Link href="#"><FaQuestionCircle /></Nav.Link>
+              <Nav.Link href="#"><FaCog /></Nav.Link>
+              <Nav.Link href="#"><FaUser /></Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
       </Navbar>
 
-      <Container className="mt-4">
-        <Row className="mb-4">
-          <Col>
-            <div className="card p-4">
-              <h2 className="mb-3">Configuration</h2>
-              <Row>
-                <Col md={6}>
-                  <CountrySelector
-                    countries={countries}
-                    selectedCountry={selectedCountry}
-                    onCountryChange={handleCountryChange}
-                    disabled={isLoading}
-                  />
-                </Col>
-                <Col md={6}>
-                  <CategorySelector
-                    categories={categories}
-                    selectedCategories={selectedCategories}
-                    onCategoryChange={handleCategoryChange}
-                    onAddCustomCategory={handleAddCustomCategory}
-                    disabled={isLoading}
-                  />
-                </Col>
-              </Row>
-              <div className="d-grid gap-2 mt-3">
-                <button
-                  className="btn btn-primary"
-                  onClick={handleSearch}
-                  disabled={isLoading || !selectedCountry || selectedCategories.length === 0}
-                >
-                  {isLoading ? 'Traitement en cours...' : 'Rechercher des suggestions'}
-                </button>
+      <div className="bg-light py-2">
+        <Container>
+          <nav aria-label="breadcrumb">
+            <ol className="breadcrumb mb-0">
+              <li className="breadcrumb-item"><a href="#">Accueil</a></li>
+              <li className="breadcrumb-item active">Ciblage</li>
+              {selectedCountry && (
+                <li className="breadcrumb-item active">{countryName}</li>
+              )}
+            </ol>
+          </nav>
+        </Container>
+      </div>
+
+      <Container className="my-4">
+        {/* En-tête de la page */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h1 className="h3 mb-1">Meta Targeting Assistant</h1>
+            <p className="text-muted">Générez des suggestions de ciblage précises basées sur l'IA</p>
+          </div>
+          
+          {selectedCountry && processStep === 'done' && (
+            <div className="text-end">
+              <h2 className="h5 mb-1">{countryName}</h2>
+              <div>
+                <Badge bg="primary" className="me-1">
+                  {statistics?.totalCritères || 0} critères
+                </Badge>
+                <Badge bg="success">
+                  {statistics?.totalCorrespondances || 0} correspondances
+                </Badge>
               </div>
             </div>
-          </Col>
-        </Row>
+          )}
+        </div>
 
-        {isLoading && (
-          <Row className="mb-4">
-            <Col>
-              <div className="card p-4">
-                <LoadingSpinner 
-                  message={
-                    processStep === 'generating' 
-                      ? 'Génération des critères via OpenAI (jusqu\'à 500 par catégorie)...' 
-                      : 'Récupération des suggestions Meta...'
-                  }
-                  progress={processStep === 'fetching' ? progressData : null}
+        {/* Section de configuration */}
+        <Card className="mb-4">
+          <Card.Header>
+            <div className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">
+                <FaLayerGroup className="me-2" />
+                Configuration
+              </h5>
+              {selectedCountry && selectedCategories.length > 0 && (
+                <span className="text-muted">
+                  {countryName} · {selectedCategories.length} catégories
+                </span>
+              )}
+            </div>
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              <Col md={6}>
+                <CountrySelector
+                  countries={countries}
+                  selectedCountry={selectedCountry}
+                  onCountryChange={handleCountryChange}
+                  disabled={isLoading}
                 />
-              </div>
-            </Col>
-          </Row>
+              </Col>
+              <Col md={6}>
+                <CategorySelector
+                  categories={categories}
+                  selectedCategories={selectedCategories}
+                  onCategoryChange={handleCategoryChange}
+                  onAddCustomCategory={handleAddCustomCategory}
+                  disabled={isLoading}
+                />
+              </Col>
+            </Row>
+            <div className="d-grid gap-2 mt-3">
+              <button
+                className="btn btn-primary"
+                onClick={handleSearch}
+                disabled={isLoading || !selectedCountry || selectedCategories.length === 0}
+              >
+                {isLoading ? 'Traitement en cours...' : 'Rechercher des suggestions'}
+              </button>
+            </div>
+          </Card.Body>
+        </Card>
+
+        {/* Section de progression */}
+        {isLoading && (
+          <Card className="mb-4">
+            <Card.Header>
+              <h5 className="mb-0">
+                <FaChartLine className="me-2" />
+                Progression
+              </h5>
+            </Card.Header>
+            <Card.Body>
+              <LoadingSpinner 
+                message={
+                  processStep === 'generating' 
+                    ? 'Génération des critères via OpenAI (jusqu\'à 500 par catégorie)...' 
+                    : 'Récupération des suggestions Meta...'
+                }
+                progress={processStep === 'fetching' ? progressData : null}
+              />
+              
+              {processStep === 'fetching' && progressData.total > 0 && (
+                <div className="mt-4">
+                  <div className="d-flex justify-content-between mb-2">
+                    <div>Progression globale</div>
+                    <div>{progressData.current} / {progressData.total}</div>
+                  </div>
+                  <ProgressBar 
+                    now={Math.floor((progressData.current / progressData.total) * 100)} 
+                    label={`${Math.floor((progressData.current / progressData.total) * 100)}%`} 
+                  />
+                  
+                  {progressData.currentItem && (
+                    <div className="mt-3 p-3 bg-light rounded">
+                      <h6 className="mb-1">Critère en cours de traitement:</h6>
+                      <div className="text-primary fw-bold">{progressData.currentItem}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card.Body>
+          </Card>
         )}
 
+        {/* Section de statistiques */}
+        {results.length > 0 && statistics && (
+          <Card className="mb-4">
+            <Card.Header>
+              <h5 className="mb-0">
+                <FaChartLine className="me-2" />
+                Aperçu des résultats
+              </h5>
+            </Card.Header>
+            <Card.Body>
+              <Row>
+                <Col md={3}>
+                  <div className="metric-card text-center">
+                    <div className="metric-title">Critères générés</div>
+                    <div className="metric-value">{statistics.totalCritères}</div>
+                  </div>
+                </Col>
+                <Col md={3}>
+                  <div className="metric-card text-center">
+                    <div className="metric-title">Correspondances trouvées</div>
+                    <div className="metric-value">{statistics.totalCorrespondances}</div>
+                  </div>
+                </Col>
+                <Col md={3}>
+                  <div className="metric-card text-center">
+                    <div className="metric-title">Moyenne par critère</div>
+                    <div className="metric-value">{statistics.moyenneCorrespondances.toFixed(1)}</div>
+                  </div>
+                </Col>
+                <Col md={3}>
+                  <div className="metric-card text-center">
+                    <div className="metric-title">Taux de correspondance</div>
+                    <div className="metric-value">
+                      {((statistics.totalCorrespondances / (statistics.totalCritères * 5)) * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+              
+              {statistics.critèreMax && (
+                <div className="mt-4 p-3 bg-light rounded">
+                  <h6 className="mb-1">Critère avec le plus de correspondances:</h6>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div className="fw-bold">{statistics.critèreMax.criterion}</div>
+                    <Badge bg="primary">{statistics.critèreMax.matches.length} correspondances</Badge>
+                  </div>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        )}
+
+        {/* Section des résultats */}
         {results.length > 0 && (
-          <Row>
-            <Col>
-              <div className="card p-4">
-                <h2 className="mb-3">Résultats</h2>
-                <ResultsTable 
-                  results={results} 
-                  selectedCountry={selectedCountry} 
-                />
+          <Card>
+            <Card.Header>
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">
+                  <FaDatabase className="me-2" />
+                  Résultats
+                </h5>
+                <Badge bg="primary">{results.length} critères</Badge>
               </div>
-            </Col>
-          </Row>
+            </Card.Header>
+            <Card.Body>
+              <ResultsTable 
+                results={results} 
+                selectedCountry={selectedCountry} 
+              />
+            </Card.Body>
+          </Card>
         )}
       </Container>
     </div>
