@@ -16,6 +16,7 @@ function App() {
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [processStep, setProcessStep] = useState('idle'); // idle, generating, fetching, done
+  const [customCategoryCounter, setCustomCategoryCounter] = useState(1); // Compteur pour les IDs uniques des catégories personnalisées
 
   // Récupération des pays et catégories au chargement
   useEffect(() => {
@@ -42,6 +43,42 @@ function App() {
 
     fetchInitialData();
   }, []);
+
+  // Fonction pour ajouter une catégorie personnalisée
+  const handleAddCustomCategory = (categoryName) => {
+    // Vérifier si la catégorie existe déjà (insensible à la casse)
+    const categoryExists = categories.some(
+      cat => cat.name.toLowerCase() === categoryName.toLowerCase()
+    );
+
+    if (categoryExists) {
+      toast.warning(`La catégorie "${categoryName}" existe déjà`);
+      return;
+    }
+
+    // Créer un ID unique pour la catégorie personnalisée
+    const customId = `custom_${customCategoryCounter}`;
+    
+    // Ajouter la nouvelle catégorie
+    const newCategory = {
+      id: customId,
+      name: categoryName,
+      isCustom: true // Marque la catégorie comme personnalisée
+    };
+    
+    // Mettre à jour la liste des catégories
+    const updatedCategories = [...categories, newCategory];
+    setCategories(updatedCategories);
+    
+    // Sélectionner automatiquement la nouvelle catégorie
+    setSelectedCategories([...selectedCategories, customId]);
+    
+    // Incrémenter le compteur pour la prochaine catégorie personnalisée
+    setCustomCategoryCounter(prev => prev + 1);
+    
+    // Notification
+    toast.success(`Catégorie "${categoryName}" ajoutée avec succès`);
+  };
 
   // Lancement du processus de recherche
   const handleSearch = async () => {
@@ -184,6 +221,7 @@ function App() {
                     categories={categories}
                     selectedCategories={selectedCategories}
                     onCategoryChange={handleCategoryChange}
+                    onAddCustomCategory={handleAddCustomCategory}
                     disabled={isLoading}
                   />
                 </Col>
