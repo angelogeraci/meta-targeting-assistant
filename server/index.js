@@ -17,7 +17,7 @@ const { router: authRoutes, protect } = require('./routes/auth');
 // Connexion à MongoDB
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`MongoDB connecté: ${conn.connection.host}`);
   } catch (error) {
     console.error(`Erreur de connexion à MongoDB: ${error.message}`);
