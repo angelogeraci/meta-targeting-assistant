@@ -200,7 +200,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
                 <option value="">Tous les scores</option>
                 <option value="high">Score élevé (≥ 0.7)</option>
                 <option value="medium">Score moyen (0.4 - 0.7)</option>
-                <option value="low">Score faible (< 0.4)</option>
+                <option value="low">Score faible (&lt; 0.4)</option>
                 <option value="none">Aucune correspondance</option>
               </select>
             </div>
