@@ -12,7 +12,7 @@ const openai = new OpenAI({
  * @param {number} maxResults - Nombre maximum de critères à générer
  * @returns {Promise<string[]>} - Liste des critères générés
  */
-async function generateCriteria(category, country, maxResults = 100) {
+async function generateCriteria(category, country, maxResults = 500) {
   try {
     const systemPrompt = `
     Tu es un expert en marketing digital et en ciblage publicitaire avec une compréhension approfondie des marchés internationaux et des habitudes de consommation.
@@ -22,8 +22,9 @@ async function generateCriteria(category, country, maxResults = 100) {
     - Les critères doivent inclure à la fois des éléments locaux/nationaux ET des éléments populaires/connus dans ce pays (même s'ils sont d'origine étrangère).
     - L'objectif est de comprendre les habitudes de consommation des personnes dans ce pays spécifique.
     - Les critères doivent ABSOLUMENT être connus et pertinents dans le pays mentionné.
-    - Fournir une liste très diversifiée et représentative qui couvre différents segments démographiques.
+    - Fournir une liste extrêmement diversifiée et représentative qui couvre différents segments démographiques.
     - Ne pas se limiter aux options les plus évidentes - inclure des options de niche mais populaires.
+    - Viser l'exhaustivité totale - ne pas hésiter à lister TOUS les éléments pertinents jusqu'à la limite demandée.
     `;
 
     const userPrompt = `
@@ -34,8 +35,13 @@ async function generateCriteria(category, country, maxResults = 100) {
     2. Des ${category} étrangers qui sont populaires ou bien connus en ${country}
     3. Des options pour différents groupes démographiques (jeunes, adultes, seniors)
     4. Des options grand public ET des options de niche avec une audience significative
+    5. Des tendances actuelles ET des classiques de longue date
+    6. Des éléments de toutes gammes de prix/popularité si applicable
     
-    IMPORTANT: Assure-toi que TOUS les éléments sont connus et pertinents en ${country}.
+    IMPORTANT: 
+    - Assure-toi que TOUS les éléments sont connus et pertinents en ${country}.
+    - Sois le plus EXHAUSTIF possible, l'objectif est d'avoir une liste complète sans limite.
+    - Ne te limite pas aux ${maxResults} premiers éléments qui te viennent à l'esprit, explore tous les aspects possibles.
     
     Retourne uniquement les noms sans numérotation, un par ligne, sans commentaires ni explications supplémentaires.
     `;
@@ -46,8 +52,8 @@ async function generateCriteria(category, country, maxResults = 100) {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.8,
-      max_tokens: 2500,
+      temperature: 0.9,
+      max_tokens: 4000, // Augmenté pour permettre plus de contenu
     });
 
     // Extraction des critères de la réponse
