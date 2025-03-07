@@ -6,6 +6,7 @@ Application qui connecte les APIs de Meta et OpenAI pour générer des suggestio
 
 Cette application permet de :
 - Sélectionner un pays cible
+- Ajouter des catégories personnalisées selon vos besoins
 - Générer automatiquement des critères pertinents par catégorie via OpenAI
 - Rechercher des intérêts de ciblage correspondants via l'API Marketing de Meta
 - Calculer un score de similarité entre les critères proposés et les suggestions de Meta
@@ -14,6 +15,7 @@ Cette application permet de :
 ## Fonctionnalités
 
 - **Sélection de pays** : Choisissez le marché cible pour vos publicités
+- **Gestion des catégories** : Utilisez les catégories prédéfinies ou ajoutez vos propres catégories personnalisées
 - **Génération de critères** : Obtenez des suggestions pertinentes via OpenAI par catégorie
 - **Recherche d'intérêts Meta** : Connectez-vous à l'API Meta Marketing pour trouver les intérêts correspondants
 - **Analyse de similarité** : Évaluez la pertinence des suggestions Meta par rapport aux critères originaux
@@ -111,7 +113,7 @@ L'application sera disponible à l'adresse : http://localhost:3000
 ## Utilisation
 
 1. Sélectionnez un pays dans le menu déroulant
-2. Choisissez les catégories pour lesquelles vous souhaitez des suggestions
+2. Choisissez les catégories prédéfinies ou ajoutez vos propres catégories personnalisées
 3. Cliquez sur "Rechercher des suggestions"
 4. Attendez que les critères soient générés puis que les suggestions Meta soient récupérées
 5. Explorez les résultats dans le tableau, utilisez les filtres et triez selon vos besoins
