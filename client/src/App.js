@@ -5,6 +5,7 @@ import CountrySelector from './components/CountrySelector';
 import CategorySelector from './components/CategorySelector';
 import ResultsTable from './components/ResultsTable';
 import LoadingSpinner from './components/LoadingSpinner';
+import socketService from './services/socket';
 import axios from 'axios';
 
 function App() {
@@ -17,6 +18,12 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [processStep, setProcessStep] = useState('idle'); // idle, generating, fetching, done
   const [customCategoryCounter, setCustomCategoryCounter] = useState(1); // Compteur pour les IDs uniques des catégories personnalisées
+  const [progressData, setProgressData] = useState({
+    total: 0,
+    current: 0,
+    currentItem: null,
+    status: null
+  });
 
   // Récupération des pays et catégories au chargement
   useEffect(() => {
@@ -42,6 +49,32 @@ function App() {
     };
 
     fetchInitialData();
+  }, []);
+
+  // Établir la connexion WebSocket et écouter les mises à jour de progression
+  useEffect(() => {
+    // Connecter au serveur WebSocket
+    socketService.connect();
+
+    // S'abonner aux mises à jour de progression Meta
+    const unsubscribe = socketService.on('meta-progress', (data) => {
+      setProgressData(data);
+      
+      // Afficher des toasts pour certains événements
+      if (data.status === 'error') {
+        toast.error(`Erreur lors du traitement de "${data.currentItem}": ${data.error}`);
+      } else if (data.status === 'global-error') {
+        toast.error(`Erreur globale: ${data.error}`);
+      } else if (data.status === 'finished') {
+        toast.success('Tous les critères ont été traités avec succès!');
+      }
+    });
+
+    // Nettoyer à la déconnexion
+    return () => {
+      unsubscribe();
+      socketService.disconnect();
+    };
   }, []);
 
   // Fonction pour ajouter une catégorie personnalisée
@@ -95,6 +128,12 @@ function App() {
     setIsLoading(true);
     setResults([]);
     setProcessStep('generating');
+    setProgressData({
+      total: 0,
+      current: 0,
+      currentItem: null,
+      status: null
+    });
 
     try {
       // Étape 1: Générer des critères avec OpenAI pour chaque catégorie
@@ -110,7 +149,7 @@ function App() {
           params: {
             category: category.name,
             country: countryName,
-            maxResults: 20 // Limite à 20 critères par catégorie pour l'efficacité
+            maxResults: 100 // Augmenté à 100 critères par catégorie
           }
         });
         
@@ -249,6 +288,7 @@ function App() {
                       ? 'Génération des critères via OpenAI...' 
                       : 'Récupération des suggestions Meta...'
                   }
+                  progress={processStep === 'fetching' ? progressData : null}
                 />
               </div>
             </Col>
