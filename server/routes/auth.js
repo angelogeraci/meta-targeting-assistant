@@ -169,6 +169,59 @@ router.get('/me', protect, async (req, res) => {
 });
 
 /**
+ * @route PUT /api/auth/me
+ * @desc Mettre à jour le profil utilisateur connecté
+ * @access Private
+ */
+router.put('/me', protect, async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+    
+    // Vérifier si l'email est déjà utilisé par un autre utilisateur
+    if (email !== req.user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cet email est déjà utilisé par un autre compte'
+        });
+      }
+    }
+    
+    // Préparer les données à mettre à jour
+    const updateData = {
+      firstName,
+      lastName,
+      email
+    };
+    
+    // Si un nouveau mot de passe est fourni, le mot de passe sera haché automatiquement
+    // grâce au middleware pre-save dans le modèle User
+    if (password) {
+      updateData.password = password;
+    }
+    
+    // Mettre à jour l'utilisateur
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    res.status(200).json({
+      success: true,
+      data: user
+    });
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du profil:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erreur serveur'
+    });
+  }
+});
+
+/**
  * @route GET /api/auth/users
  * @desc Obtenir tous les utilisateurs (admin only)
  * @access Private/Admin
