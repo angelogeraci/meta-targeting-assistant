@@ -149,7 +149,7 @@ function App() {
           params: {
             category: category.name,
             country: countryName,
-            maxResults: 100 // Augmenté à 100 critères par catégorie
+            maxResults: 500 // Augmenté à 500 critères par catégorie pour une exhaustivité maximale
           }
         });
         
@@ -285,7 +285,7 @@ function App() {
                 <LoadingSpinner 
                   message={
                     processStep === 'generating' 
-                      ? 'Génération des critères via OpenAI...' 
+                      ? 'Génération des critères via OpenAI (jusqu\'à 500 par catégorie)...' 
                       : 'Récupération des suggestions Meta...'
                   }
                   progress={processStep === 'fetching' ? progressData : null}
