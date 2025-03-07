@@ -1,0 +1,254 @@
+/* Styles personnalisés inspirés de l'interface Meta Insights */
+
+:root {
+  --primary-color: #0a3d62;
+  --secondary-color: #f2f7fb;
+  --accent-color: #3498db;
+  --border-color: #e1e8ed;
+  --success-color: #2ecc71;
+  --warning-color: #f39c12;
+  --danger-color: #e74c3c;
+  --text-dark: #2c3e50;
+  --text-muted: #7f8c8d;
+  --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Style général */
+body {
+  background-color: #f5f8fa;
+  color: var(--text-dark);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Navbar */
+.navbar-dark {
+  background-color: var(--primary-color) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Cards */
+.card {
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  margin-bottom: 20px;
+}
+
+.card-header {
+  background-color: #fff;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  padding: 15px 20px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+}
+
+.section-title i {
+  margin-right: 8px;
+}
+
+/* Form controls */
+.form-control {
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  padding: 10px 12px;
+}
+
+.form-control:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.form-label {
+  font-weight: 500;
+  color: var(--text-dark);
+  margin-bottom: 6px;
+}
+
+/* Buttons */
+.btn {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 8px 16px;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #2980b9;
+  border-color: #2980b9;
+}
+
+.btn-outline-primary {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Checkboxes */
+.form-check-input:checked {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Tables */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  background-color: var(--secondary-color);
+  color: var(--text-dark);
+  font-weight: 600;
+  border-top: none;
+  padding: 12px 15px;
+}
+
+.table td {
+  padding: 12px 15px;
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(52, 152, 219, 0.05);
+}
+
+/* Progress bars */
+.progress {
+  height: 10px;
+  border-radius: 5px;
+  background-color: #ecf0f1;
+}
+
+.progress-bar {
+  background-color: var(--accent-color);
+}
+
+/* Insights panels */
+.insight-panel {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: var(--card-shadow);
+}
+
+.insight-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.insight-label {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Filter tags */
+.filter-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  margin: 0 5px 5px 0;
+  background-color: var(--secondary-color);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--text-dark);
+}
+
+.filter-tag.active {
+  background-color: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+/* Loader and spinner styles */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 0;
+}
+
+/* Dashboard-style metrics */
+.metrics-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -10px;
+}
+
+.metric-card {
+  flex: 1 1 200px;
+  background: white;
+  border-radius: 8px;
+  margin: 10px;
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+}
+
+.metric-title {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.metric-change {
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.metric-change.positive {
+  color: var(--success-color);
+}
+
+.metric-change.negative {
+  color: var(--danger-color);
+}
+
+/* Custom scroll styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #bdc3c7;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #95a5a6;
+}
