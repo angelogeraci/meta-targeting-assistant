@@ -24,7 +24,7 @@ const LoadingSpinner = ({ message, progress }) => {
           height="80"
           width="80"
           radius="9"
-          color="#4267B2"
+          color="#3498db"
           ariaLabel="chargement en cours"
           visible={true}
         />
@@ -32,30 +32,39 @@ const LoadingSpinner = ({ message, progress }) => {
       <p className="lead">{message || 'Chargement en cours...'}</p>
       
       {showProgressBar && (
-        <div className="my-3">
+        <div className="my-4">
           <ProgressBar 
             animated 
             now={progressPercentage} 
             label={`${progressPercentage}%`} 
             variant="primary"
-            className="mb-2"
+            className="mb-3"
+            style={{ height: '12px', borderRadius: '6px' }}
           />
           
-          <p className="text-muted">
-            {progress.current} sur {progress.total} critères traités
-            {progress.currentItem && (
-              <span className="d-block mt-1">
-                Élément en cours : <strong>{progress.currentItem}</strong>
+          <div className="bg-light p-3 rounded mt-3">
+            <h6 className="mb-2">Détails de progression:</h6>
+            <div className="d-flex justify-content-between mb-1">
+              <span className="fw-bold">Progression:</span>
+              <span className="text-primary">
+                {progress.current} sur {progress.total} critères traités
               </span>
+            </div>
+            
+            {progress.currentItem && (
+              <div className="d-flex justify-content-between">
+                <span className="fw-bold">Critère en cours:</span>
+                <span className="text-primary">{progress.currentItem}</span>
+              </div>
             )}
-          </p>
+          </div>
         </div>
       )}
       
       <p className="text-muted">
         {showProgressBar 
           ? "Merci de patienter pendant que nous analysons tous les critères"
-          : "Cette opération peut prendre quelques instants"
+          : "Cette opération peut prendre quelques minutes en fonction du nombre de catégories sélectionnées"
         }
       </p>
     </div>
