@@ -1,5 +1,5 @@
-import React from 'react';
-import { Form } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Form, Button, InputGroup } from 'react-bootstrap';
 
 /**
  * Composant de sélection des catégories
@@ -7,8 +7,17 @@ import { Form } from 'react-bootstrap';
  * @param {Array} selectedCategories - IDs des catégories sélectionnées
  * @param {function} onCategoryChange - Fonction appelée lors du changement de sélection
  * @param {boolean} disabled - Désactive les contrôles si true
+ * @param {function} onAddCustomCategory - Fonction pour ajouter une catégorie personnalisée
  */
-const CategorySelector = ({ categories, selectedCategories, onCategoryChange, disabled }) => {
+const CategorySelector = ({ 
+  categories, 
+  selectedCategories, 
+  onCategoryChange, 
+  onAddCustomCategory,
+  disabled 
+}) => {
+  
+  const [newCategory, setNewCategory] = useState('');
   
   // Gestion des cases à cocher
   const handleCheckboxChange = (e) => {
@@ -35,6 +44,20 @@ const CategorySelector = ({ categories, selectedCategories, onCategoryChange, di
     }
   };
   
+  // Gestion de l'ajout d'une catégorie personnalisée
+  const handleAddCategory = () => {
+    if (newCategory.trim() !== '') {
+      onAddCustomCategory(newCategory.trim());
+      setNewCategory('');
+    }
+  };
+  
+  // Gestion de la soumission du formulaire (pour éviter le rechargement de la page)
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    handleAddCategory();
+  };
+  
   return (
     <Form.Group className="mb-3">
       <Form.Label>
@@ -59,6 +82,29 @@ const CategorySelector = ({ categories, selectedCategories, onCategoryChange, di
           Tout désélectionner
         </button>
       </div>
+      
+      {/* Ajout d'une catégorie personnalisée */}
+      <Form onSubmit={handleSubmit} className="mb-3">
+        <InputGroup>
+          <Form.Control
+            type="text"
+            placeholder="Ajouter une catégorie personnalisée"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            disabled={disabled}
+          />
+          <Button 
+            variant="outline-primary" 
+            onClick={handleAddCategory}
+            disabled={disabled || newCategory.trim() === ''}
+          >
+            Ajouter
+          </Button>
+        </InputGroup>
+        <Form.Text className="text-muted">
+          Saisissez un nom de catégorie personnalisée et cliquez sur "Ajouter"
+        </Form.Text>
+      </Form>
       
       <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ced4da', borderRadius: '0.25rem', padding: '0.5rem' }}>
         {categories.map((category) => (
