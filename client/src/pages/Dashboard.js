@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import { FaChartLine, FaSearchLocation, FaLayerGroup, FaDatabase } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import AuthContext from '../context/AuthContext';
 import CountrySelector from '../components/CountrySelector';
 import CategorySelector from '../components/CategorySelector';
