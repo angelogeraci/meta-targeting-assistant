@@ -19,8 +19,7 @@ const Projects = () => {
   const [currentProject, setCurrentProject] = useState({
     name: '',
     description: '',
-    status: 'In Progress',
-    targetAudience: ''
+    status: 'In Progress'
   });
 
   // Load projects when component mounts
@@ -60,8 +59,7 @@ const Projects = () => {
       setCurrentProject({
         name: '',
         description: '',
-        status: 'In Progress',
-        targetAudience: ''
+        status: 'In Progress'
       });
       fetchProjects();
       
@@ -147,17 +145,6 @@ const Projects = () => {
         />
       </Form.Group>
       
-      <Form.Group className="mb-3">
-        <Form.Label>Target Audience</Form.Label>
-        <Form.Control 
-          type="text" 
-          name="targetAudience" 
-          value={currentProject.targetAudience} 
-          onChange={handleChange}
-          placeholder="Describe the target audience (optional)"
-        />
-      </Form.Group>
-      
       <Button variant="primary" type="submit" className="w-100">
         {buttonText}
       </Button>
@@ -218,7 +205,6 @@ const Projects = () => {
                         <th>Name</th>
                         <th>Description</th>
                         <th>Status</th>
-                        <th>Target Audience</th>
                         <th>Creation Date</th>
                         <th className="text-center">Actions</th>
                       </tr>
@@ -236,7 +222,6 @@ const Projects = () => {
                               {project.status}
                             </Badge>
                           </td>
-                          <td>{project.targetAudience || '-'}</td>
                           <td>{new Date(project.createdAt).toLocaleDateString()}</td>
                           <td>
                             <div className="d-flex justify-content-center">
