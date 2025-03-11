@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Container, Row, Col, Card } from 'react-bootstrap';
-import { FaChartLine, FaSearchLocation, FaLayerGroup, FaDatabase } from 'react-icons/fa';
+import { Container, Row, Col, Card, Alert, Button } from 'react-bootstrap';
+import { FaChartLine, FaSearchLocation, FaLayerGroup, FaDatabase, FaArrowLeft } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import CountrySelector from '../components/CountrySelector';
 import CategorySelector from '../components/CategorySelector';
@@ -12,6 +13,10 @@ import axios from 'axios';
 
 const Dashboard = () => {
   const { currentUser } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const projectId = queryParams.get('projectId');
   
   // États
   const [countries, setCountries] = useState([]);
@@ -28,6 +33,7 @@ const Dashboard = () => {
     currentItem: null,
     status: null
   });
+  const [currentProject, setCurrentProject] = useState(null);
 
   // Récupération des pays et catégories au chargement
   useEffect(() => {
@@ -46,6 +52,11 @@ const Dashboard = () => {
           // Sélection par défaut de toutes les catégories
           setSelectedCategories(categoriesResponse.data.data.map(cat => cat.id));
         }
+        
+        // Si un projectId est fourni, récupérer les détails du projet
+        if (projectId) {
+          fetchProjectDetails(projectId);
+        }
       } catch (error) {
         console.error('Erreur lors du chargement des données initiales:', error);
         toast.error('Erreur lors du chargement des données initiales');
@@ -53,7 +64,35 @@ const Dashboard = () => {
     };
 
     fetchInitialData();
-  }, []);
+  }, [projectId]);
+
+  // Récupérer les détails du projet
+  const fetchProjectDetails = async (id) => {
+    try {
+      const response = await axios.get(`/api/projects/${id}`);
+      setCurrentProject(response.data);
+      
+      // Récupérer les résultats associés au projet
+      fetchProjectResults(id);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des détails du projet:', error);
+      toast.error('Erreur lors de la récupération des détails du projet');
+    }
+  };
+  
+  // Récupérer les résultats associés au projet
+  const fetchProjectResults = async (id) => {
+    try {
+      const response = await axios.get(`/api/projects/${id}/results`);
+      if (response.data && response.data.length > 0) {
+        setResults(response.data);
+        setProcessStep('done');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des résultats du projet:', error);
+      // Ne pas afficher d'erreur si le projet n'a pas encore de résultats
+    }
+  };
 
   // Établir la connexion WebSocket et écouter les mises à jour de progression
   useEffect(() => {
@@ -128,6 +167,13 @@ const Dashboard = () => {
       toast.warning('Veuillez sélectionner au moins une catégorie');
       return;
     }
+    
+    // Vérifier si un projet est sélectionné
+    if (!projectId && !currentProject) {
+      toast.warning('Aucun projet sélectionné. Veuillez créer un projet avant de lancer une recherche.');
+      navigate('/projects');
+      return;
+    }
 
     setIsLoading(true);
     setResults([]);
@@ -200,33 +246,53 @@ const Dashboard = () => {
         });
         
         setResults(formattedResults);
-        toast.success(`${formattedResults.length} critères traités avec succès!`);
+        
+        // Sauvegarder les résultats dans le projet
+        if (projectId || currentProject) {
+          const pid = projectId || currentProject._id;
+          await saveResultsToProject(pid, formattedResults, countryName);
+        }
+        
+        toast.success('Recherche terminée avec succès!');
       } else {
         toast.error('Erreur lors de la récupération des suggestions Meta');
       }
     } catch (error) {
       console.error('Erreur lors du processus de recherche:', error);
-      toast.error('Erreur lors du processus: ' + (error.response?.data?.message || error.message));
+      toast.error('Erreur lors du processus de recherche');
     } finally {
       setIsLoading(false);
       setProcessStep('done');
     }
   };
-
-  // Gestion du changement de pays
-  const handleCountryChange = (countryCode) => {
-    setSelectedCountry(countryCode);
-    // Réinitialisation des résultats
-    setResults([]);
-    setProcessStep('idle');
+  
+  // Sauvegarder les résultats dans le projet
+  const saveResultsToProject = async (projectId, results, country) => {
+    try {
+      await axios.post(`/api/projects/${projectId}/results`, {
+        results,
+        country,
+        categories: selectedCategories.map(id => {
+          const category = categories.find(c => c.id === id);
+          return category ? category.name : id;
+        })
+      });
+      
+      // Mettre à jour le statut du projet
+      await axios.put(`/api/projects/${projectId}`, {
+        status: 'Terminé'
+      });
+      
+      toast.success('Résultats sauvegardés dans le projet');
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des résultats:', error);
+      toast.error('Erreur lors de la sauvegarde des résultats');
+    }
   };
-
-  // Gestion du changement de catégories
-  const handleCategoryChange = (categoryIds) => {
-    setSelectedCategories(categoryIds);
-    // Réinitialisation des résultats
-    setResults([]);
-    setProcessStep('idle');
+  
+  // Retourner à la liste des projets
+  const goBackToProjects = () => {
+    navigate('/projects');
   };
 
   // Calcul des statistiques
@@ -257,146 +323,141 @@ const Dashboard = () => {
   const statistics = calculerStatistiques();
   const countryName = countries.find(c => c.code === selectedCountry)?.name || '';
 
+  // Rendu du composant
   return (
-    <>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 className="h3 mb-1">Tableau de bord</h1>
-          <p className="text-muted">Bienvenue, {currentUser?.firstName}</p>
-        </div>
-      </div>
-
-      {/* Section de configuration */}
-      <Card className="mb-4">
-        <Card.Header>
-          <div className="d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">
-              <FaLayerGroup className="me-2" />
-              Configuration
-            </h5>
-            {selectedCountry && selectedCategories.length > 0 && (
-              <span className="text-muted">
-                {countryName} · {selectedCategories.length} catégories
-              </span>
-            )}
+    <Container fluid className="py-4">
+      {/* En-tête */}
+      <Row className="mb-4">
+        <Col>
+          <div className="d-flex align-items-center">
+            <Button 
+              variant="outline-secondary" 
+              className="me-3" 
+              onClick={goBackToProjects}
+            >
+              <FaArrowLeft />
+            </Button>
+            <div>
+              <h1 className="mb-0">
+                {currentProject ? `Recherche: ${currentProject.name}` : 'Tableau de bord'}
+              </h1>
+              <p className="text-muted">
+                {currentProject 
+                  ? currentProject.description 
+                  : 'Générez des suggestions de critères publicitaires pour Meta Ads'}
+              </p>
+            </div>
           </div>
-        </Card.Header>
-        <Card.Body>
-          <Row>
-            <Col md={6}>
-              <CountrySelector
-                countries={countries}
-                selectedCountry={selectedCountry}
-                onCountryChange={handleCountryChange}
-                disabled={isLoading}
-              />
+        </Col>
+      </Row>
+
+      {/* Contenu principal */}
+      {processStep === 'done' && results.length > 0 ? (
+        // Affichage des résultats
+        <ResultsTable results={results} />
+      ) : (
+        // Interface de recherche
+        <>
+          <Row className="mb-4">
+            <Col md={6} className="mb-4 mb-md-0">
+              <Card>
+                <Card.Header className="bg-primary text-white">
+                  <FaSearchLocation className="me-2" /> Sélection du pays
+                </Card.Header>
+                <Card.Body>
+                  <CountrySelector 
+                    countries={countries} 
+                    selectedCountry={selectedCountry} 
+                    onChange={setSelectedCountry} 
+                  />
+                </Card.Body>
+              </Card>
             </Col>
             <Col md={6}>
-              <CategorySelector
-                categories={categories}
-                selectedCategories={selectedCategories}
-                onCategoryChange={handleCategoryChange}
-                onAddCustomCategory={handleAddCustomCategory}
-                disabled={isLoading}
-              />
+              <Card>
+                <Card.Header className="bg-primary text-white">
+                  <FaLayerGroup className="me-2" /> Sélection des catégories
+                </Card.Header>
+                <Card.Body>
+                  <CategorySelector 
+                    categories={categories} 
+                    selectedCategories={selectedCategories} 
+                    onChange={setSelectedCategories}
+                    onAddCustomCategory={handleAddCustomCategory}
+                  />
+                </Card.Body>
+              </Card>
             </Col>
           </Row>
-          <div className="d-grid gap-2 mt-3">
-            <button
-              className="btn btn-primary"
-              onClick={handleSearch}
-              disabled={isLoading || !selectedCountry || selectedCategories.length === 0}
-            >
-              {isLoading ? 'Traitement en cours...' : 'Rechercher des suggestions'}
-            </button>
-          </div>
-        </Card.Body>
-      </Card>
 
-      {/* Section de progression */}
-      {isLoading && (
-        <Card className="mb-4">
-          <Card.Header>
-            <h5 className="mb-0">
-              <FaChartLine className="me-2" />
-              Progression
-            </h5>
-          </Card.Header>
-          <Card.Body>
-            <LoadingSpinner 
-              message={
-                processStep === 'generating' 
-                  ? 'Génération des critères via OpenAI (jusqu\'à 500 par catégorie)...' 
-                  : 'Récupération des suggestions Meta...'
-              }
-              progress={processStep === 'fetching' ? progressData : null}
-            />
-          </Card.Body>
-        </Card>
-      )}
+          <Row className="mb-4">
+            <Col>
+              <div className="d-grid">
+                <Button 
+                  variant="success" 
+                  size="lg" 
+                  onClick={handleSearch}
+                  disabled={isLoading || !selectedCountry || selectedCategories.length === 0}
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Recherche en cours...
+                    </>
+                  ) : (
+                    <>Lancer la recherche</>
+                  )}
+                </Button>
+              </div>
+            </Col>
+          </Row>
 
-      {/* Section de statistiques */}
-      {results.length > 0 && statistics && (
-        <Card className="mb-4">
-          <Card.Header>
-            <h5 className="mb-0">
-              <FaChartLine className="me-2" />
-              Aperçu des résultats
-            </h5>
-          </Card.Header>
-          <Card.Body>
+          {/* Affichage de la progression */}
+          {isLoading && (
             <Row>
-              <Col md={3}>
-                <div className="metric-card text-center">
-                  <div className="metric-title">Critères générés</div>
-                  <div className="metric-value">{statistics.totalCritères}</div>
-                </div>
-              </Col>
-              <Col md={3}>
-                <div className="metric-card text-center">
-                  <div className="metric-title">Correspondances trouvées</div>
-                  <div className="metric-value">{statistics.totalCorrespondances}</div>
-                </div>
-              </Col>
-              <Col md={3}>
-                <div className="metric-card text-center">
-                  <div className="metric-title">Moyenne par critère</div>
-                  <div className="metric-value">{statistics.moyenneCorrespondances.toFixed(1)}</div>
-                </div>
-              </Col>
-              <Col md={3}>
-                <div className="metric-card text-center">
-                  <div className="metric-title">Taux de correspondance</div>
-                  <div className="metric-value">
-                    {((statistics.totalCorrespondances / (statistics.totalCritères * 5)) * 100).toFixed(1)}%
-                  </div>
-                </div>
+              <Col>
+                <Card className="mb-4">
+                  <Card.Header className="bg-info text-white">
+                    <FaDatabase className="me-2" /> Progression
+                  </Card.Header>
+                  <Card.Body>
+                    {processStep === 'generating' && (
+                      <Alert variant="info">
+                        Génération des critères en cours...
+                      </Alert>
+                    )}
+                    
+                    {processStep === 'fetching' && (
+                      <>
+                        <div className="mb-3">
+                          <div className="d-flex justify-content-between mb-1">
+                            <span>Progression: {progressData.current} / {progressData.total}</span>
+                            <span>{Math.round((progressData.current / progressData.total) * 100)}%</span>
+                          </div>
+                          <div className="progress">
+                            <div 
+                              className="progress-bar progress-bar-striped progress-bar-animated" 
+                              role="progressbar" 
+                              style={{ width: `${(progressData.current / progressData.total) * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                        
+                        {progressData.currentItem && (
+                          <Alert variant="info">
+                            Traitement en cours: "{progressData.currentItem}"
+                          </Alert>
+                        )}
+                      </>
+                    )}
+                  </Card.Body>
+                </Card>
               </Col>
             </Row>
-          </Card.Body>
-        </Card>
+          )}
+        </>
       )}
-
-      {/* Section des résultats */}
-      {results.length > 0 && (
-        <Card>
-          <Card.Header>
-            <div className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">
-                <FaDatabase className="me-2" />
-                Résultats
-              </h5>
-            </div>
-          </Card.Header>
-          <Card.Body>
-            <ResultsTable 
-              results={results} 
-              selectedCountry={selectedCountry} 
-            />
-          </Card.Body>
-        </Card>
-      )}
-    </>
+    </Container>
   );
 };
 

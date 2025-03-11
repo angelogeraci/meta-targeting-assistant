@@ -12,7 +12,9 @@ dotenv.config();
 // Import des routes
 const criteriaRoutes = require('./routes/criteria');
 const metaRoutes = require('./routes/meta');
-const { router: authRoutes, protect } = require('./routes/auth');
+const authRoutes = require('./routes/auth');
+const projectRoutes = require('./routes/projects');
+const auth = require('./middleware/auth');
 
 // Connexion à MongoDB
 const connectDB = async () => {
@@ -41,9 +43,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes
-app.use('/api/criteria', protect, criteriaRoutes);
-app.use('/api/meta', protect, metaRoutes);
+app.use('/api/criteria', auth, criteriaRoutes);
+app.use('/api/meta', auth, metaRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/projects', auth, projectRoutes);
 
 // Route par défaut
 app.get('/', (req, res) => {

@@ -18,6 +18,7 @@ import Register from './components/auth/Register';
 // Dashboard Pages
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
+import Projects from './pages/Projects';
 
 // Admin Pages
 import Users from './pages/admin/Users';
@@ -38,17 +39,20 @@ function App() {
               {/* Dashboard */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/projects" element={<Projects />} />
               
               {/* Admin Routes */}
               <Route element={<AdminRoute />}>
                 <Route path="/admin/users" element={<Users />} />
               </Route>
+              
+              {/* Redirect root to projects */}
+              <Route path="/" element={<Navigate to="/projects" replace />} />
             </Route>
           </Route>
           
-          {/* Redirects */}
-          <Route path="/" element={<Navigate to="/dashboard" />} />
-          <Route path="*" element={<Navigate to="/dashboard" />} />
+          {/* Redirect any unknown routes to projects */}
+          <Route path="*" element={<Navigate to="/projects" replace />} />
         </Routes>
       </Router>
     </AuthProvider>

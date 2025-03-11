@@ -32,12 +32,20 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError(null); // Réinitialiser l'erreur avant de commencer
       const userData = await getUsers();
-      setUsers(userData);
-      setError(null);
+      
+      if (userData && Array.isArray(userData)) {
+        setUsers(userData);
+      } else {
+        console.warn('Format de données utilisateur inattendu:', userData);
+        setUsers([]);
+        setError('Format de données utilisateur inattendu.');
+      }
     } catch (err) {
-      setError('Erreur lors de la récupération des utilisateurs.');
-      console.error(err);
+      console.error('Erreur lors de la récupération des utilisateurs:', err);
+      setError('Erreur lors de la récupération des utilisateurs. Les données seront chargées si disponibles.');
+      // Ne pas bloquer l'affichage des utilisateurs si certains sont déjà chargés
     } finally {
       setLoading(false);
     }
@@ -83,11 +91,25 @@ const UserManagement = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const form = e.currentTarget;
+    if (e) e.preventDefault();
     
-    if (form.checkValidity() === false) {
-      e.stopPropagation();
+    if (modalType === 'delete') {
+      try {
+        setLoading(true);
+        await deleteUser(selectedUser._id);
+        await fetchUsers();
+        handleModalClose();
+      } catch (err) {
+        setError('Une erreur est survenue lors de la suppression.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+    
+    const form = document.getElementById('user-form');
+    if (!form || form.checkValidity() === false) {
       setValidated(true);
       return;
     }
@@ -99,8 +121,6 @@ const UserManagement = () => {
         await createUser(formData);
       } else if (modalType === 'edit') {
         await updateUser(selectedUser._id, formData);
-      } else if (modalType === 'delete') {
-        await deleteUser(selectedUser._id);
       }
       
       // Rafraîchir la liste des utilisateurs
@@ -118,7 +138,7 @@ const UserManagement = () => {
 
   // Rendu du formulaire d'utilisateur (ajout/modification)
   const renderUserForm = () => (
-    <Form noValidate validated={validated} onSubmit={handleSubmit}>
+    <Form id="user-form" noValidate validated={validated} onSubmit={handleSubmit}>
       <Row>
         <Col md={6}>
           <Form.Group className="mb-3">
@@ -381,9 +401,7 @@ const UserManagement = () => {
           </Button>
           <Button 
             variant={modalConfig.variant} 
-            onClick={modalType === 'delete' ? handleSubmit : null}
-            type={modalType !== 'delete' ? 'submit' : 'button'}
-            form={modalType !== 'delete' ? 'user-form' : ''}
+            onClick={handleSubmit}
             disabled={loading}
           >
             {loading ? (

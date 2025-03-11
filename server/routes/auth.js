@@ -360,49 +360,37 @@ router.delete('/users/:id', protect, isAdmin, async (req, res) => {
   }
 });
 
-// Fonction utilitaire pour envoyer le token dans la réponse
+// Fonction pour envoyer la réponse avec le token
 const sendTokenResponse = (user, statusCode, res) => {
   // Créer le token
   const token = user.getSignedJwtToken();
 
-  // Options du cookie
+  // Options pour le cookie
   const options = {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
-    ),
+    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000),
     httpOnly: true
   };
 
-  // Activer HTTPS en production
+  // Ajouter secure flag en production
   if (process.env.NODE_ENV === 'production') {
     options.secure = true;
   }
 
-  // Créer un objet utilisateur sans le mot de passe
-  const userResponse = {
-    id: user._id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    role: user.role,
-    createdAt: user.createdAt,
-    lastLogin: user.lastLogin,
-    active: user.active
-  };
-
+  // Envoyer la réponse avec le cookie
   res
     .status(statusCode)
     .cookie('token', token, options)
     .json({
       success: true,
       token,
-      user: userResponse
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role
+      }
     });
 };
 
-// Exporter les middlewares et les routes
-module.exports = {
-  router,
-  protect,
-  isAdmin
-};
+module.exports = router;

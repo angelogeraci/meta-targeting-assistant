@@ -6,7 +6,7 @@ import {
 } from 'react-bootstrap';
 import { 
   FaSearchLocation, FaUser, FaUsers, FaSignOutAlt, 
-  FaTachometerAlt, FaChartLine, FaBars, FaUserCog 
+  FaTachometerAlt, FaChartLine, FaBars, FaUserCog, FaProjectDiagram 
 } from 'react-icons/fa';
 import AuthContext from '../../context/AuthContext';
 
@@ -55,13 +55,21 @@ const MainLayout = () => {
           <Navbar.Toggle aria-controls="main-nav" />
           
           <Navbar.Collapse id="main-nav">
-            <Nav className="me-auto d-none d-lg-flex">
+            <Nav className="me-auto">
               <Nav.Link 
                 as={Link} 
                 to="/dashboard" 
                 className={isActive('/dashboard') ? 'active fw-bold' : ''}
               >
                 <FaTachometerAlt className="me-1" /> Tableau de bord
+              </Nav.Link>
+              
+              <Nav.Link 
+                as={Link} 
+                to="/projects" 
+                className={isActive('/projects') ? 'active fw-bold' : ''}
+              >
+                <FaProjectDiagram className="me-1" /> Projets
               </Nav.Link>
               
               {isAdmin() && (
@@ -107,8 +115,8 @@ const MainLayout = () => {
         </Container>
       </Navbar>
 
-      {/* Sidebar mobile */}
-      <Offcanvas show={showSidebar} onHide={handleCloseSidebar} responsive="lg">
+      {/* Sidebar mobile - uniquement visible sur les petits écrans */}
+      <Offcanvas show={showSidebar} onHide={handleCloseSidebar} className="d-lg-none">
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>Menu</Offcanvas.Title>
         </Offcanvas.Header>
@@ -121,6 +129,15 @@ const MainLayout = () => {
               onClick={handleCloseSidebar}
             >
               <FaTachometerAlt className="me-2" /> Tableau de bord
+            </Nav.Link>
+            
+            <Nav.Link 
+              as={Link} 
+              to="/projects" 
+              className={isActive('/projects') ? 'active fw-bold' : ''}
+              onClick={handleCloseSidebar}
+            >
+              <FaProjectDiagram className="me-2" /> Projets
             </Nav.Link>
             
             {isAdmin() && (
@@ -169,12 +186,12 @@ const MainLayout = () => {
               </p>
             </div>
             <div>
-              <Link to="/privacy" className="text-decoration-none text-muted me-3">
+              <a href="#" className="text-decoration-none text-muted me-3">
                 Confidentialité
-              </Link>
-              <Link to="/terms" className="text-decoration-none text-muted">
+              </a>
+              <a href="#" className="text-decoration-none text-muted">
                 Conditions d'utilisation
-              </Link>
+              </a>
             </div>
           </div>
         </Container>

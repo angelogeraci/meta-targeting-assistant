@@ -15,4 +15,7 @@ root.render(
   </React.StrictMode>
 );
 
-reportWebVitals();
+// Appel optionnel à reportWebVitals
+if (typeof reportWebVitals === 'function') {
+  reportWebVitals();
+}
