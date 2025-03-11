@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Table, Button, Badge, Accordion } from 'react-bootstrap';
+import { Table, Button, Badge, Accordion, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { CSVLink } from 'react-csv';
-import { FaFileDownload, FaFilter, FaSort, FaSearch } from 'react-icons/fa';
+import { FaFileDownload, FaFilter, FaSort, FaSearch, FaSitemap, FaInfoCircle } from 'react-icons/fa';
 
 /**
  * Component displaying results in a table format
@@ -23,6 +23,8 @@ const ResultsTable = ({ results, selectedCountry }) => {
   const csvData = results.map(result => ({
     'OpenAI Criterion': result.criterion,
     'Category': result.category,
+    'Path': result.categoryPath || '',
+    'Full Path': result.fullPath || `${result.criterion}`,
     'Best Meta Match': result.bestMatch ? result.bestMatch.name : '',
     'Meta ID': result.bestMatch ? result.bestMatch.id : '',
     'Similarity Score': result.bestMatch ? result.bestMatch.similarity_score : '',
@@ -50,6 +52,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
       const searchLower = searchTerm.toLowerCase();
       return (
         result.criterion.toLowerCase().includes(searchLower) ||
+        (result.fullPath && result.fullPath.toLowerCase().includes(searchLower)) ||
         (result.bestMatch && result.bestMatch.name.toLowerCase().includes(searchLower))
       );
     })
@@ -90,6 +93,10 @@ const ResultsTable = ({ results, selectedCountry }) => {
         case 'category':
           compareA = a.category;
           compareB = b.category;
+          break;
+        case 'path':
+          compareA = a.fullPath || '';
+          compareB = b.fullPath || '';
           break;
         case 'meta_match':
           compareA = a.bestMatch ? a.bestMatch.name : '';
@@ -221,6 +228,15 @@ const ResultsTable = ({ results, selectedCountry }) => {
               <th onClick={() => handleSort('category')} style={{ cursor: 'pointer' }}>
                 Category <FaSort className="ms-1" />
               </th>
+              <th onClick={() => handleSort('path')} style={{ cursor: 'pointer' }}>
+                Path <FaSort className="ms-1" />
+                <OverlayTrigger
+                  placement="top"
+                  overlay={<Tooltip>Full hierarchical path including category path and criterion</Tooltip>}
+                >
+                  <FaInfoCircle className="ms-2 text-muted" style={{ fontSize: '0.8em' }} />
+                </OverlayTrigger>
+              </th>
               <th onClick={() => handleSort('meta_match')} style={{ cursor: 'pointer' }}>
                 Meta Match <FaSort className="ms-1" />
               </th>
@@ -239,6 +255,16 @@ const ResultsTable = ({ results, selectedCountry }) => {
                   <td>{result.criterion}</td>
                   <td>
                     <Badge bg="info">{result.category}</Badge>
+                  </td>
+                  <td>
+                    {result.categoryPath ? (
+                      <div className="d-flex align-items-center">
+                        <FaSitemap className="me-2 text-secondary" />
+                        <span>{result.fullPath || result.criterion}</span>
+                      </div>
+                    ) : (
+                      <span className="text-muted">None</span>
+                    )}
                   </td>
                   <td>
                     {result.bestMatch ? (
@@ -298,7 +324,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="text-center">
+                <td colSpan="8" className="text-center">
                   No results match the filter criteria
                 </td>
               </tr>
