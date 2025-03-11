@@ -22,7 +22,7 @@ const Register = () => {
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     
-    // Vérifier si les mots de passe correspondent
+    // Check if passwords match
     if (e.target.name === 'confirmPassword' || e.target.name === 'password') {
       const passwordValue = e.target.name === 'password' ? e.target.value : password;
       const confirmValue = e.target.name === 'confirmPassword' ? e.target.value : confirmPassword;
@@ -59,8 +59,8 @@ const Register = () => {
     <div className="auth-container d-flex align-items-center justify-content-center py-5">
       <Card className="auth-card w-100">
         <Card.Header className="text-center">
-          <h4 className="auth-title mb-1"><FaUserPlus className="me-2" /> Inscription</h4>
-          <p className="auth-subtitle mb-0">Créez votre compte Meta Targeting Assistant</p>
+          <h4 className="auth-title mb-1"><FaUserPlus className="me-2" /> Register</h4>
+          <p className="auth-subtitle mb-0">Create your Meta Targeting Assistant account</p>
         </Card.Header>
         <Card.Body>
           {error && <Alert variant="danger">{error}</Alert>}
@@ -69,38 +69,38 @@ const Register = () => {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Prénom</Form.Label>
+                  <Form.Label>First Name</Form.Label>
                   <InputGroup>
                     <InputGroup.Text><FaUser /></InputGroup.Text>
                     <Form.Control
                       type="text"
-                      placeholder="Votre prénom"
+                      placeholder="Your first name"
                       name="firstName"
                       value={firstName}
                       onChange={onChange}
                       required
                     />
                     <Form.Control.Feedback type="invalid">
-                      Le prénom est requis.
+                      First name is required.
                     </Form.Control.Feedback>
                   </InputGroup>
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Nom</Form.Label>
+                  <Form.Label>Last Name</Form.Label>
                   <InputGroup>
                     <InputGroup.Text><FaUser /></InputGroup.Text>
                     <Form.Control
                       type="text"
-                      placeholder="Votre nom"
+                      placeholder="Your last name"
                       name="lastName"
                       value={lastName}
                       onChange={onChange}
                       required
                     />
                     <Form.Control.Feedback type="invalid">
-                      Le nom est requis.
+                      Last name is required.
                     </Form.Control.Feedback>
                   </InputGroup>
                 </Form.Group>
@@ -108,30 +108,30 @@ const Register = () => {
             </Row>
             
             <Form.Group className="mb-3">
-              <Form.Label>Adresse e-mail</Form.Label>
+              <Form.Label>Email Address</Form.Label>
               <InputGroup>
                 <InputGroup.Text><FaEnvelope /></InputGroup.Text>
                 <Form.Control
                   type="email"
-                  placeholder="Votre adresse e-mail"
+                  placeholder="Your email address"
                   name="email"
                   value={email}
                   onChange={onChange}
                   required
                 />
                 <Form.Control.Feedback type="invalid">
-                  Veuillez fournir une adresse e-mail valide.
+                  Please provide a valid email address.
                 </Form.Control.Feedback>
               </InputGroup>
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Mot de passe</Form.Label>
+              <Form.Label>Password</Form.Label>
               <InputGroup>
                 <InputGroup.Text><FaLock /></InputGroup.Text>
                 <Form.Control
                   type={showPassword ? "text" : "password"}
-                  placeholder="Créez un mot de passe"
+                  placeholder="Create a password"
                   name="password"
                   value={password}
                   onChange={onChange}
@@ -145,21 +145,21 @@ const Register = () => {
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </Button>
                 <Form.Control.Feedback type="invalid">
-                  Le mot de passe doit contenir au moins 6 caractères.
+                  Password must be at least 6 characters.
                 </Form.Control.Feedback>
               </InputGroup>
               <Form.Text className="text-muted">
-                Le mot de passe doit contenir au moins 6 caractères.
+                Password must be at least 6 characters.
               </Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label>Confirmation du mot de passe</Form.Label>
+              <Form.Label>Confirm Password</Form.Label>
               <InputGroup>
                 <InputGroup.Text><FaLock /></InputGroup.Text>
                 <Form.Control
                   type={showPassword ? "text" : "password"}
-                  placeholder="Confirmez votre mot de passe"
+                  placeholder="Confirm your password"
                   name="confirmPassword"
                   value={confirmPassword}
                   onChange={onChange}
@@ -167,7 +167,7 @@ const Register = () => {
                   isInvalid={validated && !passwordMatch}
                 />
                 <Form.Control.Feedback type="invalid">
-                  Les mots de passe ne correspondent pas.
+                  Passwords do not match.
                 </Form.Control.Feedback>
               </InputGroup>
             </Form.Group>
@@ -178,13 +178,13 @@ const Register = () => {
               className="btn-auth" 
               disabled={loading}
             >
-              {loading ? 'Inscription en cours...' : 'Créer un compte'}
+              {loading ? 'Registering...' : 'Create Account'}
             </Button>
           </Form>
 
           <div className="auth-footer mt-4">
             <p className="mb-0">
-              Vous avez déjà un compte ? <Link to="/login" className="text-decoration-none">Se connecter</Link>
+              Already have an account? <Link to="/login" className="text-decoration-none">Login</Link>
             </p>
           </div>
         </Card.Body>
