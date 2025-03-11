@@ -48,9 +48,14 @@ const Dashboard = () => {
         // Fetch categories
         const categoriesResponse = await axios.get('/api/criteria/categories');
         if (categoriesResponse.data.success) {
-          setCategories(categoriesResponse.data.data);
+          // Add path property if not exists
+          const categoriesWithPath = categoriesResponse.data.data.map(cat => ({
+            ...cat,
+            path: cat.path || '' // Ensure path exists
+          }));
+          setCategories(categoriesWithPath);
           // Default select all categories
-          setSelectedCategories(categoriesResponse.data.data.map(cat => cat.id));
+          setSelectedCategories(categoriesWithPath.map(cat => cat.id));
         }
         
         // If projectId is provided, get project details
@@ -121,7 +126,7 @@ const Dashboard = () => {
   }, []);
 
   // Function to add a custom category
-  const handleAddCustomCategory = (categoryName) => {
+  const handleAddCustomCategory = (categoryName, categoryPath = '') => {
     // Check if category already exists (case insensitive)
     const categoryExists = categories.some(
       cat => cat.name.toLowerCase() === categoryName.toLowerCase()
@@ -139,6 +144,7 @@ const Dashboard = () => {
     const newCategory = {
       id: customId,
       name: categoryName,
+      path: categoryPath,
       isCustom: true // Mark category as custom
     };
     
@@ -154,6 +160,28 @@ const Dashboard = () => {
     
     // Notification
     toast.success(`Category "${categoryName}" added successfully`);
+  };
+  
+  // Function to update a category
+  const handleUpdateCategory = (categoryId, newName, newPath = '') => {
+    // Check if category exists
+    const categoryIndex = categories.findIndex(cat => cat.id === categoryId);
+    
+    if (categoryIndex === -1) {
+      toast.error('Category not found');
+      return;
+    }
+    
+    // Update the category
+    const updatedCategories = [...categories];
+    updatedCategories[categoryIndex] = {
+      ...updatedCategories[categoryIndex],
+      name: newName,
+      path: newPath
+    };
+    
+    setCategories(updatedCategories);
+    toast.success(`Category updated successfully`);
   };
 
   // Start search process
@@ -206,7 +234,8 @@ const Dashboard = () => {
         if (criteriaResponse.data.success) {
           const criteria = criteriaResponse.data.data.map(criterion => ({
             criterion,
-            category: category.name
+            category: category.name,
+            categoryPath: category.path || ''
           }));
           
           allCriteria.push(...criteria);
@@ -240,6 +269,10 @@ const Dashboard = () => {
             id: index + 1,
             criterion: item.original_criterion,
             category: categoryInfo ? categoryInfo.category : 'Uncategorized',
+            categoryPath: categoryInfo ? categoryInfo.categoryPath : '',
+            fullPath: categoryInfo && categoryInfo.categoryPath ? 
+              `${categoryInfo.categoryPath}${categoryInfo.categoryPath ? ' -- ' : ''}${item.original_criterion}` : 
+              item.original_criterion,
             matches: item.matches || [],
             bestMatch: item.matches && item.matches.length > 0 ? item.matches[0] : null
           };
@@ -274,7 +307,10 @@ const Dashboard = () => {
         country,
         categories: selectedCategories.map(id => {
           const category = categories.find(c => c.id === id);
-          return category ? category.name : id;
+          return category ? {
+            name: category.name,
+            path: category.path || ''
+          } : { name: id, path: '' };
         })
       });
       
@@ -385,6 +421,7 @@ const Dashboard = () => {
                     selectedCategories={selectedCategories} 
                     onCategoryChange={setSelectedCategories}
                     onAddCustomCategory={handleAddCustomCategory}
+                    onUpdateCategory={handleUpdateCategory}
                     disabled={isLoading}
                   />
                 </Card.Body>
