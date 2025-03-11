@@ -2,7 +2,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// Schéma utilisateur
+// User schema
 const userSchema = new mongoose.Schema({
   email: String,
   password: String,
@@ -16,17 +16,17 @@ const User = mongoose.model('User', userSchema);
 async function initAdmin() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connecté à MongoDB');
+    console.log('Connected to MongoDB');
 
-    // Vérifier si l'admin existe déjà
+    // Check if admin already exists
     const existingAdmin = await User.findOne({ email: process.env.ADMIN_EMAIL });
     
     if (existingAdmin) {
-      console.log('L\'administrateur existe déjà');
+      console.log('Administrator already exists');
       return;
     }
 
-    // Créer l'admin
+    // Create admin
     const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
     const admin = new User({
       email: process.env.ADMIN_EMAIL,
@@ -37,13 +37,13 @@ async function initAdmin() {
     });
 
     await admin.save();
-    console.log('Administrateur créé avec succès');
+    console.log('Administrator created successfully');
 
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error('Error:', error);
   } finally {
     await mongoose.connection.close();
   }
 }
 
-initAdmin(); 
+initAdmin();
