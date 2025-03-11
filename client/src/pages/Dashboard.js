@@ -18,7 +18,7 @@ const Dashboard = () => {
   const queryParams = new URLSearchParams(location.search);
   const projectId = queryParams.get('projectId');
   
-  // États
+  // States
   const [countries, setCountries] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -26,7 +26,7 @@ const Dashboard = () => {
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [processStep, setProcessStep] = useState('idle'); // idle, generating, fetching, done
-  const [customCategoryCounter, setCustomCategoryCounter] = useState(1); // Compteur pour les IDs uniques des catégories personnalisées
+  const [customCategoryCounter, setCustomCategoryCounter] = useState(1); // Counter for unique custom category IDs
   const [progressData, setProgressData] = useState({
     total: 0,
     current: 0,
@@ -35,52 +35,52 @@ const Dashboard = () => {
   });
   const [currentProject, setCurrentProject] = useState(null);
 
-  // Récupération des pays et catégories au chargement
+  // Fetch countries and categories on load
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        // Récupération des pays
+        // Fetch countries
         const countriesResponse = await axios.get('/api/criteria/countries');
         if (countriesResponse.data.success) {
           setCountries(countriesResponse.data.data);
         }
 
-        // Récupération des catégories
+        // Fetch categories
         const categoriesResponse = await axios.get('/api/criteria/categories');
         if (categoriesResponse.data.success) {
           setCategories(categoriesResponse.data.data);
-          // Sélection par défaut de toutes les catégories
+          // Default select all categories
           setSelectedCategories(categoriesResponse.data.data.map(cat => cat.id));
         }
         
-        // Si un projectId est fourni, récupérer les détails du projet
+        // If projectId is provided, get project details
         if (projectId) {
           fetchProjectDetails(projectId);
         }
       } catch (error) {
-        console.error('Erreur lors du chargement des données initiales:', error);
-        toast.error('Erreur lors du chargement des données initiales');
+        console.error('Error loading initial data:', error);
+        toast.error('Error loading initial data');
       }
     };
 
     fetchInitialData();
   }, [projectId]);
 
-  // Récupérer les détails du projet
+  // Get project details
   const fetchProjectDetails = async (id) => {
     try {
       const response = await axios.get(`/api/projects/${id}`);
       setCurrentProject(response.data);
       
-      // Récupérer les résultats associés au projet
+      // Get results associated with the project
       fetchProjectResults(id);
     } catch (error) {
-      console.error('Erreur lors de la récupération des détails du projet:', error);
-      toast.error('Erreur lors de la récupération des détails du projet');
+      console.error('Error fetching project details:', error);
+      toast.error('Error fetching project details');
     }
   };
   
-  // Récupérer les résultats associés au projet
+  // Get results associated with the project
   const fetchProjectResults = async (id) => {
     try {
       const response = await axios.get(`/api/projects/${id}/results`);
@@ -89,88 +89,88 @@ const Dashboard = () => {
         setProcessStep('done');
       }
     } catch (error) {
-      console.error('Erreur lors de la récupération des résultats du projet:', error);
-      // Ne pas afficher d'erreur si le projet n'a pas encore de résultats
+      console.error('Error fetching project results:', error);
+      // Don't show error if project doesn't have results yet
     }
   };
 
-  // Établir la connexion WebSocket et écouter les mises à jour de progression
+  // Establish WebSocket connection and listen for progress updates
   useEffect(() => {
-    // Connecter au serveur WebSocket
+    // Connect to WebSocket server
     socketService.connect();
 
-    // S'abonner aux mises à jour de progression Meta
+    // Subscribe to Meta progress updates
     const unsubscribe = socketService.on('meta-progress', (data) => {
       setProgressData(data);
       
-      // Afficher des toasts pour certains événements
+      // Display toasts for certain events
       if (data.status === 'error') {
-        toast.error(`Erreur lors du traitement de "${data.currentItem}": ${data.error}`);
+        toast.error(`Error processing "${data.currentItem}": ${data.error}`);
       } else if (data.status === 'global-error') {
-        toast.error(`Erreur globale: ${data.error}`);
+        toast.error(`Global error: ${data.error}`);
       } else if (data.status === 'finished') {
-        toast.success('Tous les critères ont été traités avec succès!');
+        toast.success('All criteria have been processed successfully!');
       }
     });
 
-    // Nettoyer à la déconnexion
+    // Cleanup on disconnect
     return () => {
       unsubscribe();
       socketService.disconnect();
     };
   }, []);
 
-  // Fonction pour ajouter une catégorie personnalisée
+  // Function to add a custom category
   const handleAddCustomCategory = (categoryName) => {
-    // Vérifier si la catégorie existe déjà (insensible à la casse)
+    // Check if category already exists (case insensitive)
     const categoryExists = categories.some(
       cat => cat.name.toLowerCase() === categoryName.toLowerCase()
     );
 
     if (categoryExists) {
-      toast.warning(`La catégorie "${categoryName}" existe déjà`);
+      toast.warning(`Category "${categoryName}" already exists`);
       return;
     }
 
-    // Créer un ID unique pour la catégorie personnalisée
+    // Create unique ID for custom category
     const customId = `custom_${customCategoryCounter}`;
     
-    // Ajouter la nouvelle catégorie
+    // Add new category
     const newCategory = {
       id: customId,
       name: categoryName,
-      isCustom: true // Marque la catégorie comme personnalisée
+      isCustom: true // Mark category as custom
     };
     
-    // Mettre à jour la liste des catégories
+    // Update categories list
     const updatedCategories = [...categories, newCategory];
     setCategories(updatedCategories);
     
-    // Sélectionner automatiquement la nouvelle catégorie
+    // Automatically select new category
     setSelectedCategories([...selectedCategories, customId]);
     
-    // Incrémenter le compteur pour la prochaine catégorie personnalisée
+    // Increment counter for next custom category
     setCustomCategoryCounter(prev => prev + 1);
     
     // Notification
-    toast.success(`Catégorie "${categoryName}" ajoutée avec succès`);
+    toast.success(`Category "${categoryName}" added successfully`);
   };
 
-  // Lancement du processus de recherche
+  // Start search process
   const handleSearch = async () => {
     if (!selectedCountry) {
-      toast.warning('Veuillez sélectionner un pays');
+      toast.warning('Please select a country');
       return;
     }
 
     if (selectedCategories.length === 0) {
-      toast.warning('Veuillez sélectionner au moins une catégorie');
+      toast.warning('Please select at least one category');
       return;
     }
     
-    // Vérifier si un projet est sélectionné
+    // Check if a project is selected
     if (!projectId && !currentProject) {
-      toast.warning('Aucun projet sélectionné. Veuillez créer un projet avant de lancer une recherche.');
+      toast.warning('No project selected. Please create a project before starting a search.');
       navigate('/projects');
       return;
     }
@@ -186,20 +186,20 @@ const Dashboard = () => {
     });
 
     try {
-      // Étape 1: Générer des critères avec OpenAI pour chaque catégorie
+      // Step 1: Generate criteria with OpenAI for each category
       const allCriteria = [];
       
       for (const categoryId of selectedCategories) {
         const category = categories.find(c => c.id === categoryId);
         const countryName = countries.find(c => c.code === selectedCountry)?.name;
         
-        toast.info(`Génération de critères pour: ${category.name}`);
+        toast.info(`Generating criteria for: ${category.name}`);
         
         const criteriaResponse = await axios.get('/api/criteria/generate', {
           params: {
             category: category.name,
             country: countryName,
-            maxResults: 500 // Augmenté à 500 critères par catégorie pour une exhaustivité maximale
+            maxResults: 500 // Increased to 500 criteria per category for maximum coverage
           }
         });
         
@@ -214,15 +214,15 @@ const Dashboard = () => {
       }
       
       if (allCriteria.length === 0) {
-        toast.error('Aucun critère n\'a pu être généré');
+        toast.error('No criteria could be generated');
         setIsLoading(false);
         setProcessStep('idle');
         return;
       }
       
-      // Étape 2: Récupérer les suggestions Meta pour tous les critères
+      // Step 2: Get Meta suggestions for all criteria
       setProcessStep('fetching');
-      toast.info(`Récupération des suggestions Meta pour ${allCriteria.length} critères...`);
+      toast.info(`Fetching Meta suggestions for ${allCriteria.length} criteria...`);
       
       const countryName = countries.find(c => c.code === selectedCountry)?.name;
       const batchResponse = await axios.post('/api/meta/batch-suggestions', {
@@ -232,14 +232,14 @@ const Dashboard = () => {
       });
       
       if (batchResponse.data.success) {
-        // Formatage des résultats
+        // Format results
         const formattedResults = batchResponse.data.data.map((item, index) => {
           const categoryInfo = allCriteria.find(c => c.criterion === item.original_criterion);
           
           return {
             id: index + 1,
             criterion: item.original_criterion,
-            category: categoryInfo ? categoryInfo.category : 'Non catégorisé',
+            category: categoryInfo ? categoryInfo.category : 'Uncategorized',
             matches: item.matches || [],
             bestMatch: item.matches && item.matches.length > 0 ? item.matches[0] : null
           };
@@ -247,26 +247,26 @@ const Dashboard = () => {
         
         setResults(formattedResults);
         
-        // Sauvegarder les résultats dans le projet
+        // Save results to project
         if (projectId || currentProject) {
           const pid = projectId || currentProject._id;
           await saveResultsToProject(pid, formattedResults, countryName);
         }
         
-        toast.success('Recherche terminée avec succès!');
+        toast.success('Search completed successfully!');
       } else {
-        toast.error('Erreur lors de la récupération des suggestions Meta');
+        toast.error('Error fetching Meta suggestions');
       }
     } catch (error) {
-      console.error('Erreur lors du processus de recherche:', error);
-      toast.error('Erreur lors du processus de recherche');
+      console.error('Error during search process:', error);
+      toast.error('Error during search process');
     } finally {
       setIsLoading(false);
       setProcessStep('done');
     }
   };
   
-  // Sauvegarder les résultats dans le projet
+  // Save results to project
   const saveResultsToProject = async (projectId, results, country) => {
     try {
       await axios.post(`/api/projects/${projectId}/results`, {
@@ -278,55 +278,55 @@ const Dashboard = () => {
         })
       });
       
-      // Mettre à jour le statut du projet
+      // Update project status
       await axios.put(`/api/projects/${projectId}`, {
-        status: 'Terminé'
+        status: 'Completed'
       });
       
-      toast.success('Résultats sauvegardés dans le projet');
+      toast.success('Results saved to project');
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des résultats:', error);
-      toast.error('Erreur lors de la sauvegarde des résultats');
+      console.error('Error saving results:', error);
+      toast.error('Error saving results');
     }
   };
   
-  // Retourner à la liste des projets
+  // Return to projects list
   const goBackToProjects = () => {
     navigate('/projects');
   };
 
-  // Calcul des statistiques
-  const calculerStatistiques = () => {
+  // Calculate statistics
+  const calculateStatistics = () => {
     if (!results || results.length === 0) return null;
 
-    // Nombre de critères
-    const totalCritères = results.length;
+    // Number of criteria
+    const totalCriteria = results.length;
     
-    // Nombre de correspondances
-    const totalCorrespondances = results.reduce((sum, item) => sum + (item.matches ? item.matches.length : 0), 0);
+    // Number of matches
+    const totalMatches = results.reduce((sum, item) => sum + (item.matches ? item.matches.length : 0), 0);
     
-    // Moyenne de correspondances par critère
-    const moyenneCorrespondances = totalCorrespondances / totalCritères;
+    // Average matches per criterion
+    const averageMatches = totalMatches / totalCriteria;
     
-    // Critère avec le plus de correspondances
-    const critèreMax = results.reduce((max, item) => 
+    // Criterion with most matches
+    const maxCriterion = results.reduce((max, item) => 
       (item.matches && item.matches.length > (max?.matches?.length || 0)) ? item : max, null);
     
     return {
-      totalCritères,
-      totalCorrespondances,
-      moyenneCorrespondances,
-      critèreMax
+      totalCriteria,
+      totalMatches,
+      averageMatches,
+      maxCriterion
     };
   };
 
-  const statistics = calculerStatistiques();
+  const statistics = calculateStatistics();
   const countryName = countries.find(c => c.code === selectedCountry)?.name || '';
 
-  // Rendu du composant
+  // Component rendering
   return (
     <Container fluid className="py-4">
-      {/* En-tête */}
+      {/* Header */}
       <Row className="mb-4">
         <Col>
           <div className="d-flex align-items-center">
@@ -339,36 +339,37 @@ const Dashboard = () => {
             </Button>
             <div>
               <h1 className="mb-0">
-                {currentProject ? `Recherche: ${currentProject.name}` : 'Tableau de bord'}
+                {currentProject ? `Search: ${currentProject.name}` : 'Dashboard'}
               </h1>
               <p className="text-muted">
                 {currentProject 
                   ? currentProject.description 
-                  : 'Générez des suggestions de critères publicitaires pour Meta Ads'}
+                  : 'Generate advertising criteria suggestions for Meta Ads'}
               </p>
             </div>
           </div>
         </Col>
       </Row>
 
-      {/* Contenu principal */}
+      {/* Main content */}
       {processStep === 'done' && results.length > 0 ? (
-        // Affichage des résultats
-        <ResultsTable results={results} />
+        // Display results
+        <ResultsTable results={results} selectedCountry={selectedCountry} />
       ) : (
-        // Interface de recherche
+        // Search interface
         <>
           <Row className="mb-4">
             <Col md={6} className="mb-4 mb-md-0">
               <Card>
                 <Card.Header className="bg-primary text-white">
-                  <FaSearchLocation className="me-2" /> Sélection du pays
+                  <FaSearchLocation className="me-2" /> Country Selection
                 </Card.Header>
                 <Card.Body>
                   <CountrySelector 
                     countries={countries} 
                     selectedCountry={selectedCountry} 
-                    onChange={setSelectedCountry} 
+                    onCountryChange={setSelectedCountry} 
+                    disabled={isLoading}
                   />
                 </Card.Body>
               </Card>
@@ -376,14 +377,15 @@ const Dashboard = () => {
             <Col md={6}>
               <Card>
                 <Card.Header className="bg-primary text-white">
-                  <FaLayerGroup className="me-2" /> Sélection des catégories
+                  <FaLayerGroup className="me-2" /> Category Selection
                 </Card.Header>
                 <Card.Body>
                   <CategorySelector 
                     categories={categories} 
                     selectedCategories={selectedCategories} 
-                    onChange={setSelectedCategories}
+                    onCategoryChange={setSelectedCategories}
                     onAddCustomCategory={handleAddCustomCategory}
+                    disabled={isLoading}
                   />
                 </Card.Body>
               </Card>
@@ -402,28 +404,28 @@ const Dashboard = () => {
                   {isLoading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Recherche en cours...
+                      Search in progress...
                     </>
                   ) : (
-                    <>Lancer la recherche</>
+                    <>Start Search</>
                   )}
                 </Button>
               </div>
             </Col>
           </Row>
 
-          {/* Affichage de la progression */}
+          {/* Progress display */}
           {isLoading && (
             <Row>
               <Col>
                 <Card className="mb-4">
                   <Card.Header className="bg-info text-white">
-                    <FaDatabase className="me-2" /> Progression
+                    <FaDatabase className="me-2" /> Progress
                   </Card.Header>
                   <Card.Body>
                     {processStep === 'generating' && (
                       <Alert variant="info">
-                        Génération des critères en cours...
+                        Generating criteria in progress...
                       </Alert>
                     )}
                     
@@ -431,7 +433,7 @@ const Dashboard = () => {
                       <>
                         <div className="mb-3">
                           <div className="d-flex justify-content-between mb-1">
-                            <span>Progression: {progressData.current} / {progressData.total}</span>
+                            <span>Progress: {progressData.current} / {progressData.total}</span>
                             <span>{Math.round((progressData.current / progressData.total) * 100)}%</span>
                           </div>
                           <div className="progress">
@@ -445,7 +447,7 @@ const Dashboard = () => {
                         
                         {progressData.currentItem && (
                           <Alert variant="info">
-                            Traitement en cours: "{progressData.currentItem}"
+                            Currently processing: "{progressData.currentItem}"
                           </Alert>
                         )}
                       </>
