@@ -43,43 +43,43 @@ const Login = () => {
     <div className="auth-container d-flex align-items-center justify-content-center py-5">
       <Card className="auth-card w-100">
         <Card.Header className="text-center">
-          <h4 className="auth-title mb-1"><FaSignInAlt className="me-2" /> Connexion</h4>
-          <p className="auth-subtitle mb-0">Accédez à votre compte Meta Targeting Assistant</p>
+          <h4 className="auth-title mb-1"><FaSignInAlt className="me-2" /> Login</h4>
+          <p className="auth-subtitle mb-0">Access your Meta Targeting Assistant account</p>
         </Card.Header>
         <Card.Body>
           {error && <Alert variant="danger">{error}</Alert>}
           
           <Form noValidate validated={validated} onSubmit={handleSubmit}>
             <Form.Group className="mb-3">
-              <Form.Label>Adresse e-mail</Form.Label>
+              <Form.Label>Email address</Form.Label>
               <InputGroup>
                 <InputGroup.Text><FaEnvelope /></InputGroup.Text>
                 <Form.Control
                   type="email"
-                  placeholder="Votre adresse e-mail"
+                  placeholder="Your email address"
                   name="email"
                   value={email}
                   onChange={onChange}
                   required
                 />
                 <Form.Control.Feedback type="invalid">
-                  Veuillez fournir une adresse e-mail valide.
+                  Please provide a valid email address.
                 </Form.Control.Feedback>
               </InputGroup>
             </Form.Group>
 
             <Form.Group className="mb-4">
               <div className="d-flex justify-content-between align-items-center mb-1">
-                <Form.Label>Mot de passe</Form.Label>
+                <Form.Label>Password</Form.Label>
                 <Link to="/forgot-password" className="text-decoration-none small">
-                  Mot de passe oublié ?
+                  Forgot password?
                 </Link>
               </div>
               <InputGroup>
                 <InputGroup.Text><FaLock /></InputGroup.Text>
                 <Form.Control
                   type={showPassword ? "text" : "password"}
-                  placeholder="Votre mot de passe"
+                  placeholder="Your password"
                   name="password"
                   value={password}
                   onChange={onChange}
@@ -93,7 +93,7 @@ const Login = () => {
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </Button>
                 <Form.Control.Feedback type="invalid">
-                  Le mot de passe doit contenir au moins 6 caractères.
+                  Password must be at least 6 characters.
                 </Form.Control.Feedback>
               </InputGroup>
             </Form.Group>
@@ -104,13 +104,13 @@ const Login = () => {
               className="btn-auth" 
               disabled={loading}
             >
-              {loading ? 'Connexion en cours...' : 'Se connecter'}
+              {loading ? 'Logging in...' : 'Login'}
             </Button>
           </Form>
 
           <div className="auth-footer mt-4">
             <p className="mb-0">
-              Vous n'avez pas de compte ? <Link to="/register" className="text-decoration-none">Créer un compte</Link>
+              Don't have an account? <Link to="/register" className="text-decoration-none">Create an account</Link>
             </p>
           </div>
         </Card.Body>
