@@ -6,8 +6,8 @@ const Users = () => {
     <>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 className="h3 mb-1">Gestion des utilisateurs</h1>
-          <p className="text-muted">Gérez les utilisateurs de l'application</p>
+          <h1 className="h3 mb-1">User Management</h1>
+          <p className="text-muted">Manage application users</p>
         </div>
       </div>
       
