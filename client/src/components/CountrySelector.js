@@ -2,24 +2,24 @@ import React from 'react';
 import { Form } from 'react-bootstrap';
 
 /**
- * Composant de sélection de pays
- * @param {Array} countries - Liste des pays disponibles
- * @param {string} selectedCountry - Code du pays sélectionné
- * @param {function} onCountryChange - Fonction appelée lors du changement de pays
- * @param {boolean} disabled - Désactive le sélecteur si true
+ * Country selector component
+ * @param {Array} countries - List of available countries
+ * @param {string} selectedCountry - Selected country code
+ * @param {function} onCountryChange - Function called when country changes
+ * @param {boolean} disabled - Disables the selector if true
  */
 const CountrySelector = ({ countries, selectedCountry, onCountryChange, disabled }) => {
   return (
     <Form.Group className="mb-3">
       <Form.Label>
-        <strong>Pays</strong>
+        <strong>Country</strong>
       </Form.Label>
       <Form.Select
         value={selectedCountry}
         onChange={(e) => onCountryChange(e.target.value)}
         disabled={disabled}
       >
-        <option value="">Sélectionnez un pays</option>
+        <option value="">Select a country</option>
         {countries.map((country) => (
           <option key={country.code} value={country.code}>
             {country.name}
@@ -27,7 +27,7 @@ const CountrySelector = ({ countries, selectedCountry, onCountryChange, disabled
         ))}
       </Form.Select>
       <Form.Text className="text-muted">
-        Choisissez le pays pour lequel vous souhaitez des suggestions.
+        Choose the country for which you want suggestions.
       </Form.Text>
     </Form.Group>
   );
