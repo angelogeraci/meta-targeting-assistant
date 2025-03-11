@@ -4,22 +4,22 @@ const openaiService = require('../services/openai');
 
 /**
  * @route GET /api/criteria/generate
- * @desc Génère des critères pour une catégorie dans un pays spécifique
+ * @desc Generate criteria for a category in a specific country
  * @access Public
  */
 router.get('/generate', async (req, res) => {
   try {
     const { category, country, maxResults } = req.query;
     
-    // Validation des paramètres
+    // Parameter validation
     if (!category || !country) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Les paramètres category et country sont requis' 
+        message: 'Category and country parameters are required' 
       });
     }
     
-    // Génération des critères via OpenAI
+    // Generate criteria via OpenAI
     const criteria = await openaiService.generateCriteria(
       category, 
       country, 
@@ -34,30 +34,30 @@ router.get('/generate', async (req, res) => {
       country
     });
   } catch (error) {
-    console.error('Erreur dans la route /criteria/generate:', error);
+    console.error('Error in /criteria/generate route:', error);
     res.status(500).json({ 
       success: false, 
-      message: error.message || 'Erreur serveur' 
+      message: error.message || 'Server error' 
     });
   }
 });
 
 /**
  * @route GET /api/criteria/categories
- * @desc Récupère les catégories disponibles
+ * @desc Retrieve available categories
  * @access Public
  */
 router.get('/categories', (req, res) => {
-  // Ces catégories pourraient être stockées dans une base de données ou un fichier de configuration
+  // These categories could be stored in a database or configuration file
   const categories = [
     { id: 'automobiles', name: 'Automobiles' },
-    { id: 'chanteurs', name: 'Chanteurs' },
+    { id: 'singers', name: 'Singers' },
     { id: 'restaurants', name: 'Restaurants' },
-    { id: 'marques_vetements', name: 'Marques de vêtements' },
+    { id: 'clothing_brands', name: 'Clothing Brands' },
     { id: 'sports', name: 'Sports' },
-    { id: 'acteurs', name: 'Acteurs' },
-    { id: 'loisirs', name: 'Loisirs' },
-    { id: 'technologie', name: 'Technologie' }
+    { id: 'actors', name: 'Actors' },
+    { id: 'hobbies', name: 'Hobbies' },
+    { id: 'technology', name: 'Technology' }
   ];
   
   res.json({
@@ -68,21 +68,21 @@ router.get('/categories', (req, res) => {
 
 /**
  * @route GET /api/criteria/countries
- * @desc Récupère les pays disponibles
+ * @desc Retrieve available countries
  * @access Public
  */
 router.get('/countries', (req, res) => {
-  // Liste de pays qui pourrait être étendue
+  // List of countries that could be extended
   const countries = [
-    { code: 'BE', name: 'Belgique' },
+    { code: 'BE', name: 'Belgium' },
     { code: 'FR', name: 'France' },
-    { code: 'CH', name: 'Suisse' },
+    { code: 'CH', name: 'Switzerland' },
     { code: 'CA', name: 'Canada' },
-    { code: 'US', name: 'États-Unis' },
-    { code: 'DE', name: 'Allemagne' },
-    { code: 'ES', name: 'Espagne' },
-    { code: 'IT', name: 'Italie' },
-    { code: 'GB', name: 'Royaume-Uni' }
+    { code: 'US', name: 'United States' },
+    { code: 'DE', name: 'Germany' },
+    { code: 'ES', name: 'Spain' },
+    { code: 'IT', name: 'Italy' },
+    { code: 'GB', name: 'United Kingdom' }
   ];
   
   res.json({
