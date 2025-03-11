@@ -24,12 +24,12 @@ const MainLayout = () => {
   const handleCloseSidebar = () => setShowSidebar(false);
   const handleShowSidebar = () => setShowSidebar(true);
 
-  // Vérifier si le lien est actif
+  // Check if the link is active
   const isActive = (path) => {
     return location.pathname === path;
   };
 
-  // Générer les initiales de l'utilisateur
+  // Generate user initials
   const getInitials = () => {
     if (!currentUser) return 'U';
     return `${currentUser.firstName.charAt(0)}${currentUser.lastName.charAt(0)}`;
@@ -61,7 +61,7 @@ const MainLayout = () => {
                 to="/dashboard" 
                 className={isActive('/dashboard') ? 'active fw-bold' : ''}
               >
-                <FaTachometerAlt className="me-1" /> Tableau de bord
+                <FaTachometerAlt className="me-1" /> Dashboard
               </Nav.Link>
               
               <Nav.Link 
@@ -69,7 +69,7 @@ const MainLayout = () => {
                 to="/projects" 
                 className={isActive('/projects') ? 'active fw-bold' : ''}
               >
-                <FaProjectDiagram className="me-1" /> Projets
+                <FaProjectDiagram className="me-1" /> Projects
               </Nav.Link>
               
               {isAdmin() && (
@@ -78,7 +78,7 @@ const MainLayout = () => {
                   to="/admin/users" 
                   className={isActive('/admin/users') ? 'active fw-bold' : ''}
                 >
-                  <FaUsers className="me-1" /> Utilisateurs
+                  <FaUsers className="me-1" /> Users
                 </Nav.Link>
               )}
             </Nav>
@@ -92,7 +92,7 @@ const MainLayout = () => {
                   <div className="d-none d-md-block">
                     <div className="fw-medium text-white">{currentUser?.firstName} {currentUser?.lastName}</div>
                     <div className="small text-white-50">
-                      {currentUser?.role === 'admin' ? 'Administrateur' : 'Utilisateur'}
+                      {currentUser?.role === 'admin' ? 'Administrator' : 'User'}
                     </div>
                   </div>
                 </Dropdown.Toggle>
@@ -103,10 +103,10 @@ const MainLayout = () => {
                   </Dropdown.Header>
                   <Dropdown.Divider />
                   <Dropdown.Item as={Link} to="/profile">
-                    <FaUserCog className="me-2" /> Mon profil
+                    <FaUserCog className="me-2" /> My Profile
                   </Dropdown.Item>
                   <Dropdown.Item onClick={handleLogout}>
-                    <FaSignOutAlt className="me-2" /> Déconnexion
+                    <FaSignOutAlt className="me-2" /> Logout
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
@@ -115,7 +115,7 @@ const MainLayout = () => {
         </Container>
       </Navbar>
 
-      {/* Sidebar mobile - uniquement visible sur les petits écrans */}
+      {/* Mobile sidebar - only visible on small screens */}
       <Offcanvas show={showSidebar} onHide={handleCloseSidebar} className="d-lg-none">
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>Menu</Offcanvas.Title>
@@ -128,7 +128,7 @@ const MainLayout = () => {
               className={isActive('/dashboard') ? 'active fw-bold' : ''}
               onClick={handleCloseSidebar}
             >
-              <FaTachometerAlt className="me-2" /> Tableau de bord
+              <FaTachometerAlt className="me-2" /> Dashboard
             </Nav.Link>
             
             <Nav.Link 
@@ -137,7 +137,7 @@ const MainLayout = () => {
               className={isActive('/projects') ? 'active fw-bold' : ''}
               onClick={handleCloseSidebar}
             >
-              <FaProjectDiagram className="me-2" /> Projets
+              <FaProjectDiagram className="me-2" /> Projects
             </Nav.Link>
             
             {isAdmin() && (
@@ -147,7 +147,7 @@ const MainLayout = () => {
                 className={isActive('/admin/users') ? 'active fw-bold' : ''}
                 onClick={handleCloseSidebar}
               >
-                <FaUsers className="me-2" /> Gestion des utilisateurs
+                <FaUsers className="me-2" /> User Management
               </Nav.Link>
             )}
             
@@ -159,24 +159,24 @@ const MainLayout = () => {
               className={isActive('/profile') ? 'active fw-bold' : ''}
               onClick={handleCloseSidebar}
             >
-              <FaUserCog className="me-2" /> Mon profil
+              <FaUserCog className="me-2" /> My Profile
             </Nav.Link>
             
             <Nav.Link onClick={() => { handleLogout(); handleCloseSidebar(); }}>
-              <FaSignOutAlt className="me-2" /> Déconnexion
+              <FaSignOutAlt className="me-2" /> Logout
             </Nav.Link>
           </Nav>
         </Offcanvas.Body>
       </Offcanvas>
 
-      {/* Contenu principal */}
+      {/* Main content */}
       <main className="py-3">
         <Container>
           <Outlet />
         </Container>
       </main>
 
-      {/* Pied de page */}
+      {/* Footer */}
       <footer className="bg-light py-4 mt-5">
         <Container>
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-center">
@@ -187,10 +187,10 @@ const MainLayout = () => {
             </div>
             <div>
               <a href="#" className="text-decoration-none text-muted me-3">
-                Confidentialité
+                Privacy Policy
               </a>
               <a href="#" className="text-decoration-none text-muted">
-                Conditions d'utilisation
+                Terms of Use
               </a>
             </div>
           </div>
