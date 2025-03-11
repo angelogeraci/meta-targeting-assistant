@@ -307,10 +307,7 @@ const Dashboard = () => {
         country,
         categories: selectedCategories.map(id => {
           const category = categories.find(c => c.id === id);
-          return category ? {
-            name: category.name,
-            path: category.path || ''
-          } : { name: id, path: '' };
+          return category ? category.name : id;
         })
       });
       

@@ -164,7 +164,7 @@ exports.addProjectResults = async (req, res) => {
       { 
         $set: { 
           results: results,
-          status: 'completed',
+          status: 'Terminé',
           country: country || project.country,
           categories: categories || project.categories,
           updatedAt: Date.now()
