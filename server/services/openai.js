@@ -1,50 +1,50 @@
 const { OpenAI } = require('openai');
 
-// Création de l'instance OpenAI avec la clé API
+// Create OpenAI instance with API key
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 /**
- * Génère des critères pour une catégorie et un pays spécifiques
- * @param {string} category - Catégorie (ex: "automobiles", "chanteurs")
- * @param {string} country - Pays (ex: "Belgique", "France")
- * @param {number} maxResults - Nombre maximum de critères à générer
- * @returns {Promise<string[]>} - Liste des critères générés
+ * Generate criteria for a specific category and country
+ * @param {string} category - Category (e.g., "automobiles", "singers")
+ * @param {string} country - Country (e.g., "Belgium", "France")
+ * @param {number} maxResults - Maximum number of criteria to generate
+ * @returns {Promise<string[]>} - List of generated criteria
  */
 async function generateCriteria(category, country, maxResults = 500) {
   try {
     const systemPrompt = `
-    Tu es un expert en marketing digital spécialisé dans la génération de critères de ciblage précis pour les publicités.
+    You are a digital marketing expert specialized in generating precise targeting criteria for advertisements.
     
-    TÂCHE:
-    Génère une liste exceptionnellement longue de noms spécifiques dans la catégorie demandée qui sont pertinents pour le pays indiqué.
+    TASK:
+    Generate an exceptionally long list of specific names within the requested category that are relevant to the specified country.
     
-    RÈGLES STRICTES:
-    1. RETOURNE UNIQUEMENT des noms précis, un par ligne, sans numérotation, sans énumération, sans préfixes, sans explications.
-    2. Ne réponds jamais avec des phrases ou des explications, juste des noms.
-    3. N'ajoute PAS de catégories générales ni de sous-catégories.
-    4. N'inclus AUCUN texte explicatif, même pas au début ou à la fin.
-    5. Chaque ligne doit contenir EXACTEMENT UN nom spécifique et rien d'autre.
-    6. Ne mets jamais de guillemets, de tirets ou autres caractères décoratifs.
-    7. Ne dis JAMAIS que tu ne peux pas être exhaustif.
+    STRICT RULES:
+    1. RETURN ONLY precise names, one per line, without numbering, enumeration, prefixes, or explanations.
+    2. Never respond with sentences or explanations, just names.
+    3. DO NOT add general categories or subcategories.
+    4. DO NOT include ANY explanatory text, not even at the beginning or end.
+    5. Each line must contain EXACTLY ONE specific name and nothing else.
+    6. Never use quotation marks, hyphens, or other decorative characters.
+    7. NEVER say that you cannot be exhaustive.
     
-    INSTRUCTIONS SPÉCIFIQUES:
-    - Les critères doivent inclure à la fois des éléments locaux/nationaux de ${country} ET des éléments étrangers populaires dans ce pays.
-    - Fournis le maximum de noms spécifiques possible, vise au moins ${maxResults} éléments.
-    - Assure-toi que chaque nom est connu et pertinent en ${country}.
-    - Couvre tous les segments démographiques (jeunes, adultes, seniors).
+    SPECIFIC INSTRUCTIONS:
+    - Criteria should include both local/national elements from ${country} AND foreign elements popular in that country.
+    - Provide the maximum possible number of specific names, aim for at least ${maxResults} items.
+    - Ensure each name is known and relevant in ${country}.
+    - Cover all demographic segments (youth, adults, seniors).
     `;
 
     const userPrompt = `
-    Génère une liste EXHAUSTIVE d'au moins ${maxResults} ${category} populaires ou connus en ${country}.
+    Generate an EXHAUSTIVE list of at least ${maxResults} popular or well-known ${category} in ${country}.
     
     IMPORTANT:
-    - RETOURNE UNIQUEMENT LA LISTE DE NOMS SPÉCIFIQUES, UN PAR LIGNE.
-    - NE DONNE PAS D'INTRODUCTION OU DE CONCLUSION.
-    - NE DIS PAS QUE LA LISTE N'EST PAS EXHAUSTIVE.
-    - NE METS PAS DE NUMÉROS, DE PUCES OU DE CATÉGORIES.
-    - N'AJOUTE AUCUN TEXTE EXPLICATIF.
+    - RETURN ONLY THE LIST OF SPECIFIC NAMES, ONE PER LINE.
+    - DO NOT GIVE AN INTRODUCTION OR CONCLUSION.
+    - DO NOT SAY THAT THE LIST IS NOT EXHAUSTIVE.
+    - DO NOT USE NUMBERS, BULLETS, OR CATEGORIES.
+    - DO NOT ADD ANY EXPLANATORY TEXT.
     `;
 
     const response = await openai.chat.completions.create({
@@ -59,15 +59,15 @@ async function generateCriteria(category, country, maxResults = 500) {
       presence_penalty: 0.1
     });
 
-    // Extraction des critères de la réponse
+    // Extract criteria from the response
     const text = response.choices[0].message.content;
     
-    // Nettoyage rigoureux pour s'assurer que nous avons uniquement des noms, un par ligne
+    // Rigorous cleaning to ensure we only have names, one per line
     return text
       .split('\n')
       .map(line => line.trim())
       .filter(line => {
-        // Filtre pour éliminer les lignes vides, les lignes avec des puces, des numéros, ou des métacommentaires
+        // Filter to eliminate empty lines, lines with bullets, numbers, or meta-comments
         return line && 
                !line.match(/^(\d+\.|\-|\•|\*|\–|\—)/) && 
                !line.match(/^(Note|Pour|Voici|Cette|La liste|N\.B\.|P\.S\.|Remarque)/i) &&
@@ -75,8 +75,8 @@ async function generateCriteria(category, country, maxResults = 500) {
       })
       .slice(0, maxResults);
   } catch (error) {
-    console.error('Erreur lors de la génération des critères OpenAI:', error);
-    throw new Error('Échec de la génération des critères: ' + (error.message || 'Erreur inconnue'));
+    console.error('Error generating OpenAI criteria:', error);
+    throw new Error('Failed to generate criteria: ' + (error.message || 'Unknown error'));
   }
 }
 
