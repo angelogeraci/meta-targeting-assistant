@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Form, Button, InputGroup, Row, Col, Card, Modal } from 'react-bootstrap';
-import { FaEdit, FaTrash, FaSitemap } from 'react-icons/fa';
+import { FaEdit, FaSitemap, FaPlus } from 'react-icons/fa';
 
 /**
  * Category selection component
@@ -21,11 +21,15 @@ const CategorySelector = ({
 }) => {
   
   const [newCategory, setNewCategory] = useState('');
-  const [newCategoryPath, setNewCategoryPath] = useState('');
+  const [pathSegments, setPathSegments] = useState(['']);
   const [showModal, setShowModal] = useState(false);
   const [editCategory, setEditCategory] = useState(null);
   const [editCategoryName, setEditCategoryName] = useState('');
-  const [editCategoryPath, setEditCategoryPath] = useState('');
+  const [editPathSegments, setEditPathSegments] = useState(['']);
+  
+  // References for the input fields
+  const newPathInputRefs = useRef([]);
+  const editPathInputRefs = useRef([]);
   
   // Checkbox handler
   const handleCheckboxChange = (e) => {
@@ -52,12 +56,75 @@ const CategorySelector = ({
     }
   };
   
+  // Handle adding a path segment for new category
+  const handleAddPathSegment = () => {
+    setPathSegments([...pathSegments, '']);
+    // Focus will happen after render with useEffect
+    setTimeout(() => {
+      if (newPathInputRefs.current[pathSegments.length]) {
+        newPathInputRefs.current[pathSegments.length].focus();
+      }
+    }, 10);
+  };
+  
+  // Handle adding a path segment for edit category
+  const handleAddEditPathSegment = () => {
+    setEditPathSegments([...editPathSegments, '']);
+    // Focus will happen after render
+    setTimeout(() => {
+      if (editPathInputRefs.current[editPathSegments.length]) {
+        editPathInputRefs.current[editPathSegments.length].focus();
+      }
+    }, 10);
+  };
+  
+  // Handle path segment change for new category
+  const handlePathSegmentChange = (index, value) => {
+    const newSegments = [...pathSegments];
+    newSegments[index] = value;
+    setPathSegments(newSegments);
+  };
+  
+  // Handle path segment change for edit category
+  const handleEditPathSegmentChange = (index, value) => {
+    const newSegments = [...editPathSegments];
+    newSegments[index] = value;
+    setEditPathSegments(newSegments);
+  };
+  
+  // Handle key down event for tab key
+  const handleKeyDown = (e, index, isEdit = false) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      // Prevent default tab behavior
+      e.preventDefault();
+      
+      // If it's the last segment, add a new one
+      if (isEdit) {
+        if (index === editPathSegments.length - 1) {
+          handleAddEditPathSegment();
+        }
+      } else {
+        if (index === pathSegments.length - 1) {
+          handleAddPathSegment();
+        }
+      }
+    }
+  };
+  
+  // Combine path segments into a path string
+  const combinePathSegments = (segments) => {
+    return segments
+      .filter(segment => segment.trim() !== '')
+      .join(' -- ');
+  };
+  
   // Handle adding a custom category
   const handleAddCategory = () => {
     if (newCategory.trim() !== '') {
-      onAddCustomCategory(newCategory.trim(), newCategoryPath.trim());
+      const path = combinePathSegments(pathSegments);
+      onAddCustomCategory(newCategory.trim(), path);
       setNewCategory('');
-      setNewCategoryPath('');
+      setPathSegments(['']);
     }
   };
   
@@ -65,14 +132,22 @@ const CategorySelector = ({
   const handleEditCategory = (category) => {
     setEditCategory(category);
     setEditCategoryName(category.name);
-    setEditCategoryPath(category.path || '');
+    
+    // Split path into segments if it exists
+    if (category.path) {
+      setEditPathSegments(category.path.split(' -- '));
+    } else {
+      setEditPathSegments(['']);
+    }
+    
     setShowModal(true);
   };
   
   // Update category
   const handleUpdateCategory = () => {
     if (editCategoryName.trim() !== '' && editCategory) {
-      onUpdateCategory(editCategory.id, editCategoryName.trim(), editCategoryPath.trim());
+      const path = combinePathSegments(editPathSegments);
+      onUpdateCategory(editCategory.id, editCategoryName.trim(), path);
       setShowModal(false);
     }
   };
@@ -110,38 +185,71 @@ const CategorySelector = ({
       
       {/* Add a custom category */}
       <Form onSubmit={handleSubmit} className="mb-3">
-        <Row className="g-2">
-          <Col md={5}>
-            <Form.Control
-              type="text"
-              placeholder="Category name"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              disabled={disabled}
-            />
-          </Col>
-          <Col md={5}>
-            <Form.Control
-              type="text"
-              placeholder="Path (e.g., Group -- Subgroup)"
-              value={newCategoryPath}
-              onChange={(e) => setNewCategoryPath(e.target.value)}
-              disabled={disabled}
-            />
-          </Col>
-          <Col md={2}>
+        <div className="mb-2">
+          <Form.Label className="small mb-1">Category name</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="Enter category name"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            disabled={disabled}
+          />
+        </div>
+        
+        <div className="mb-2">
+          <Form.Label className="small mb-1 d-flex justify-content-between align-items-center">
+            <span>Path (Tab to add level)</span>
             <Button 
-              variant="outline-primary" 
-              onClick={handleAddCategory}
-              disabled={disabled || newCategory.trim() === ''}
-              className="w-100"
+              variant="outline-secondary" 
+              size="sm" 
+              onClick={handleAddPathSegment}
+              disabled={disabled}
             >
-              Add
+              <FaPlus size={12} />
             </Button>
-          </Col>
-        </Row>
-        <Form.Text className="text-muted">
-          Enter a category name and path (optional), then click "Add"
+          </Form.Label>
+          
+          {pathSegments.map((segment, index) => (
+            <div 
+              key={index} 
+              className="d-flex mb-2 align-items-center"
+            >
+              {index > 0 && <span className="px-2 text-muted">→</span>}
+              <Form.Control
+                ref={el => newPathInputRefs.current[index] = el}
+                type="text"
+                placeholder={`Level ${index + 1}`}
+                value={segment}
+                onChange={(e) => handlePathSegmentChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, index)}
+                disabled={disabled}
+              />
+              {index === pathSegments.length - 1 && (
+                <Button 
+                  variant="outline-secondary" 
+                  className="ms-2" 
+                  onClick={handleAddPathSegment}
+                  disabled={disabled}
+                >
+                  <FaPlus size={12} />
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+        
+        <div className="text-end">
+          <Button 
+            variant="primary" 
+            onClick={handleAddCategory}
+            disabled={disabled || newCategory.trim() === ''}
+          >
+            Add Category
+          </Button>
+        </div>
+        
+        <Form.Text className="text-muted d-block mt-1">
+          Enter a category name and build a path by adding levels, then click "Add Category"
         </Form.Text>
       </Form>
       
@@ -209,16 +317,47 @@ const CategorySelector = ({
                 onChange={(e) => setEditCategoryName(e.target.value)}
               />
             </Form.Group>
+            
             <Form.Group className="mb-3">
-              <Form.Label>Path</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="e.g., Group -- Subgroup"
-                value={editCategoryPath}
-                onChange={(e) => setEditCategoryPath(e.target.value)}
-              />
+              <Form.Label className="d-flex justify-content-between align-items-center">
+                <span>Path</span>
+                <Button 
+                  variant="outline-secondary" 
+                  size="sm" 
+                  onClick={handleAddEditPathSegment}
+                >
+                  <FaPlus size={12} />
+                </Button>
+              </Form.Label>
+              
+              {editPathSegments.map((segment, index) => (
+                <div 
+                  key={index} 
+                  className="d-flex mb-2 align-items-center"
+                >
+                  {index > 0 && <span className="px-2 text-muted">→</span>}
+                  <Form.Control
+                    ref={el => editPathInputRefs.current[index] = el}
+                    type="text"
+                    placeholder={`Level ${index + 1}`}
+                    value={segment}
+                    onChange={(e) => handleEditPathSegmentChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, index, true)}
+                  />
+                  {index === editPathSegments.length - 1 && (
+                    <Button 
+                      variant="outline-secondary" 
+                      className="ms-2" 
+                      onClick={handleAddEditPathSegment}
+                    >
+                      <FaPlus size={12} />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              
               <Form.Text className="text-muted">
-                Define the hierarchical path for this category (use -- as separators)
+                Build the hierarchical path by adding levels (Tab key or + button to add new level)
               </Form.Text>
             </Form.Group>
           </Form>
