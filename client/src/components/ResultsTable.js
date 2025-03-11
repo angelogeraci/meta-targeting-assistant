@@ -4,47 +4,47 @@ import { CSVLink } from 'react-csv';
 import { FaFileDownload, FaFilter, FaSort, FaSearch } from 'react-icons/fa';
 
 /**
- * Composant affichant les résultats sous forme de tableau
- * @param {Array} results - Résultats à afficher
- * @param {string} selectedCountry - Code du pays sélectionné
+ * Component displaying results in a table format
+ * @param {Array} results - Results to display
+ * @param {string} selectedCountry - Selected country code
  */
 const ResultsTable = ({ results, selectedCountry }) => {
-  // États
+  // States
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('id');
   const [sortDirection, setSortDirection] = useState('asc');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterScore, setFilterScore] = useState('');
   
-  // Extraction des catégories uniques pour le filtre
+  // Extract unique categories for filtering
   const categories = [...new Set(results.map(result => result.category))];
   
-  // Préparation des données pour l'export CSV
+  // Prepare data for CSV export
   const csvData = results.map(result => ({
-    'Critère OpenAI': result.criterion,
-    'Catégorie': result.category,
-    'Meilleure correspondance Meta': result.bestMatch ? result.bestMatch.name : '',
-    'ID Meta': result.bestMatch ? result.bestMatch.id : '',
-    'Score de similarité': result.bestMatch ? result.bestMatch.similarity_score : '',
-    'Taille d\'audience': result.bestMatch ? result.bestMatch.audience_size : '',
-    'Pays': selectedCountry
+    'OpenAI Criterion': result.criterion,
+    'Category': result.category,
+    'Best Meta Match': result.bestMatch ? result.bestMatch.name : '',
+    'Meta ID': result.bestMatch ? result.bestMatch.id : '',
+    'Similarity Score': result.bestMatch ? result.bestMatch.similarity_score : '',
+    'Audience Size': result.bestMatch ? result.bestMatch.audience_size : '',
+    'Country': selectedCountry
   }));
   
-  // Gestion du tri
+  // Sort handling
   const handleSort = (field) => {
     if (sortField === field) {
-      // Inverser la direction si on clique sur le même champ
+      // Reverse direction if clicking the same field
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      // Nouveau champ à trier
+      // New field to sort
       setSortField(field);
       setSortDirection('asc');
     }
   };
   
-  // Application des filtres et du tri
+  // Apply filters and sorting
   const filteredAndSortedResults = [...results]
-    // Filtrage par recherche
+    // Filter by search
     .filter(result => {
       if (!searchTerm) return true;
       const searchLower = searchTerm.toLowerCase();
@@ -53,12 +53,12 @@ const ResultsTable = ({ results, selectedCountry }) => {
         (result.bestMatch && result.bestMatch.name.toLowerCase().includes(searchLower))
       );
     })
-    // Filtrage par catégorie
+    // Filter by category
     .filter(result => {
       if (!filterCategory) return true;
       return result.category === filterCategory;
     })
-    // Filtrage par score
+    // Filter by score
     .filter(result => {
       if (!filterScore) return true;
       
@@ -77,11 +77,11 @@ const ResultsTable = ({ results, selectedCountry }) => {
           return true;
       }
     })
-    // Tri
+    // Sort
     .sort((a, b) => {
       let compareA, compareB;
       
-      // Déterminer les valeurs à comparer selon le champ de tri
+      // Determine values to compare based on sort field
       switch (sortField) {
         case 'criterion':
           compareA = a.criterion;
@@ -104,7 +104,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
           compareB = b.id;
       }
       
-      // Comparaison
+      // Comparison
       if (compareA < compareB) {
         return sortDirection === 'asc' ? -1 : 1;
       }
@@ -114,7 +114,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
       return 0;
     });
   
-  // Fonction pour déterminer la classe CSS selon le score
+  // Function to determine CSS class based on score
   const getScoreClass = (score) => {
     if (!score && score !== 0) return '';
     if (score >= 0.7) return 'high-score';
@@ -122,7 +122,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
     return 'low-score';
   };
   
-  // Fonction pour formater l'audience
+  // Function to format audience size
   const formatAudience = (size) => {
     if (!size) return 'N/A';
     if (size >= 1000000) {
@@ -138,7 +138,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
     <div>
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4>
-          {filteredAndSortedResults.length} résultats
+          {filteredAndSortedResults.length} results
         </h4>
         <CSVLink
           data={csvData}
@@ -146,7 +146,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
           className="btn btn-success"
         >
           <FaFileDownload className="me-2" />
-          Exporter en CSV
+          Export to CSV
         </CSVLink>
       </div>
       
@@ -160,7 +160,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Rechercher..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -177,7 +177,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
               >
-                <option value="">Toutes les catégories</option>
+                <option value="">All categories</option>
                 {categories.map((category) => (
                   <option key={category} value={category}>
                     {category}
@@ -197,11 +197,11 @@ const ResultsTable = ({ results, selectedCountry }) => {
                 value={filterScore}
                 onChange={(e) => setFilterScore(e.target.value)}
               >
-                <option value="">Tous les scores</option>
-                <option value="high">Score élevé (≥ 0.7)</option>
-                <option value="medium">Score moyen (0.4 - 0.7)</option>
-                <option value="low">Score faible (&lt; 0.4)</option>
-                <option value="none">Aucune correspondance</option>
+                <option value="">All scores</option>
+                <option value="high">High score (≥ 0.7)</option>
+                <option value="medium">Medium score (0.4 - 0.7)</option>
+                <option value="low">Low score (&lt; 0.4)</option>
+                <option value="none">No match</option>
               </select>
             </div>
           </div>
@@ -216,13 +216,13 @@ const ResultsTable = ({ results, selectedCountry }) => {
                 # <FaSort className="ms-1" />
               </th>
               <th onClick={() => handleSort('criterion')} style={{ cursor: 'pointer' }}>
-                Critère OpenAI <FaSort className="ms-1" />
+                OpenAI Criterion <FaSort className="ms-1" />
               </th>
               <th onClick={() => handleSort('category')} style={{ cursor: 'pointer' }}>
-                Catégorie <FaSort className="ms-1" />
+                Category <FaSort className="ms-1" />
               </th>
               <th onClick={() => handleSort('meta_match')} style={{ cursor: 'pointer' }}>
-                Correspondance Meta <FaSort className="ms-1" />
+                Meta Match <FaSort className="ms-1" />
               </th>
               <th onClick={() => handleSort('score')} style={{ cursor: 'pointer' }}>
                 Score <FaSort className="ms-1" />
@@ -244,7 +244,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
                     {result.bestMatch ? (
                       result.bestMatch.name
                     ) : (
-                      <span className="text-muted">Aucune correspondance</span>
+                      <span className="text-muted">No match</span>
                     )}
                   </td>
                   <td className={result.bestMatch ? getScoreClass(result.bestMatch.similarity_score) : ''}>
@@ -266,13 +266,13 @@ const ResultsTable = ({ results, selectedCountry }) => {
                       <Accordion className="mt-2">
                         <Accordion.Item eventKey="0">
                           <Accordion.Header>
-                            Voir toutes les correspondances ({result.matches.length})
+                            View all matches ({result.matches.length})
                           </Accordion.Header>
                           <Accordion.Body>
                             <Table size="sm">
                               <thead>
                                 <tr>
-                                  <th>Nom</th>
+                                  <th>Name</th>
                                   <th>Score</th>
                                   <th>ID</th>
                                 </tr>
@@ -299,7 +299,7 @@ const ResultsTable = ({ results, selectedCountry }) => {
             ) : (
               <tr>
                 <td colSpan="7" className="text-center">
-                  Aucun résultat ne correspond aux critères de filtrage
+                  No results match the filter criteria
                 </td>
               </tr>
             )}
