@@ -1,128 +1,128 @@
 # Meta Targeting Assistant
 
-Application qui connecte les APIs de Meta et OpenAI pour générer des suggestions de critères de ciblage publicitaire par pays.
+Application that connects Meta and OpenAI APIs to generate advertising targeting criteria suggestions by country.
 
-## Objectif
+## Objective
 
-Cette application permet de :
-- Sélectionner un pays cible
-- Ajouter des catégories personnalisées selon vos besoins
-- Générer automatiquement des critères pertinents par catégorie via OpenAI
-- Rechercher des intérêts de ciblage correspondants via l'API Marketing de Meta
-- Calculer un score de similarité entre les critères proposés et les suggestions de Meta
-- Exporter les résultats en CSV pour une utilisation ultérieure
+This application allows you to:
+- Select a target country
+- Add custom categories according to your needs
+- Automatically generate relevant criteria by category via OpenAI
+- Search for corresponding targeting interests via Meta Marketing API
+- Calculate a similarity score between proposed criteria and Meta suggestions
+- Export results to CSV for later use
 
-## Fonctionnalités
+## Features
 
-- **Sélection de pays** : Choisissez le marché cible pour vos publicités
-- **Gestion des catégories** : Utilisez les catégories prédéfinies ou ajoutez vos propres catégories personnalisées
-- **Génération de critères** : Obtenez des suggestions pertinentes via OpenAI par catégorie
-- **Recherche d'intérêts Meta** : Connectez-vous à l'API Meta Marketing pour trouver les intérêts correspondants
-- **Analyse de similarité** : Évaluez la pertinence des suggestions Meta par rapport aux critères originaux
-- **Filtrage et tri** : Organisez les résultats pour identifier les meilleures correspondances
-- **Export CSV** : Exportez les résultats pour les utiliser dans votre gestionnaire de publicités
+- **Country Selection**: Choose the target market for your ads
+- **Category Management**: Use predefined categories or add your own custom categories
+- **Criteria Generation**: Get relevant suggestions via OpenAI by category
+- **Meta Interests Search**: Connect to Meta Marketing API to find corresponding interests
+- **Similarity Analysis**: Evaluate the relevance of Meta suggestions compared to original criteria
+- **Filtering and Sorting**: Organize results to identify the best matches
+- **CSV Export**: Export results for use in your ad manager
 
-## Captures d'écran
+## Screenshots
 
-(Captures d'écran à venir)
+(Screenshots coming soon)
 
-## Prérequis
+## Prerequisites
 
 - Node.js v16+
-- Compte développeur Meta avec accès à l'API Marketing
-- Clé API OpenAI
+- Meta developer account with Marketing API access
+- OpenAI API key
 
 ## Installation
 
-### 1. Cloner le repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/angelogeraci/meta-targeting-assistant.git
 cd meta-targeting-assistant
 ```
 
-### 2. Configurer les variables d'environnement
+### 2. Configure environment variables
 
-Créez un fichier `.env` à la racine du projet basé sur `.env.example` :
+Create a `.env` file at the root of the project based on `.env.example`:
 
 ```bash
-# Port du serveur
+# Server port
 PORT=5000
 
-# Configuration OpenAI
-OPENAI_API_KEY=votre_cle_api_openai
+# OpenAI configuration
+OPENAI_API_KEY=your_openai_api_key
 
-# Configuration Meta
-META_ACCESS_TOKEN=votre_token_acces_meta
-META_APP_ID=votre_app_id_meta
-META_APP_SECRET=votre_app_secret_meta
+# Meta configuration
+META_ACCESS_TOKEN=your_meta_access_token
+META_APP_ID=your_meta_app_id
+META_APP_SECRET=your_meta_app_secret
 
-# Environnement
+# Environment
 NODE_ENV=development
 ```
 
-### 3. Installer les dépendances
+### 3. Install dependencies
 
 ```bash
-# Installer les dépendances du serveur
+# Install server dependencies
 npm install
 
-# Installer les dépendances du client
+# Install client dependencies
 cd client
 npm install
 cd ..
 ```
 
-### 4. Démarrer l'application
+### 4. Start the application
 
 ```bash
-# Démarrer l'application en mode développement (serveur + client)
+# Start the application in development mode (server + client)
 npm run dev
 ```
 
-L'application sera disponible à l'adresse : http://localhost:3000
+The application will be available at: http://localhost:3000
 
-## Structure du projet
+## Project Structure
 
 ```
-├── client/               # Application frontend React
-│   ├── public/           # Fichiers publics React
-│   └── src/              # Code source React
-│       ├── components/   # Composants React
-│       └── services/     # Services API
-├── server/               # Serveur backend Node.js
-│   ├── routes/           # Routes API Express
-│   └── services/         # Services (OpenAI, Meta API, similarité)
-├── .env.example          # Exemple de variables d'environnement
-└── package.json          # Configuration npm
+├── client/               # React frontend application
+│   ├── public/           # React public files
+│   └── src/              # React source code
+│       ├── components/   # React components
+│       └── services/     # API services
+├── server/               # Node.js backend server
+│   ├── routes/           # Express API routes
+│   └── services/         # Services (OpenAI, Meta API, similarity)
+├── .env.example          # Example environment variables
+└── package.json          # npm configuration
 ```
 
-## Obtenir les clés API requises
+## Obtaining Required API Keys
 
-### Clé API OpenAI
-1. Créez un compte sur [OpenAI](https://openai.com/)
-2. Accédez à la section [API Keys](https://platform.openai.com/account/api-keys)
-3. Créez une nouvelle clé API
+### OpenAI API Key
+1. Create an account on [OpenAI](https://openai.com/)
+2. Access the [API Keys](https://platform.openai.com/account/api-keys) section
+3. Create a new API key
 
-### Configuration de l'API Meta Marketing
-1. Créez un compte sur [Meta for Developers](https://developers.facebook.com/)
-2. Créez une application dans la catégorie "Business"
-3. Ajoutez le produit "Marketing API" à votre application
-4. Générez un token d'accès avec les autorisations nécessaires
+### Meta Marketing API Configuration
+1. Create an account on [Meta for Developers](https://developers.facebook.com/)
+2. Create an application in the "Business" category
+3. Add the "Marketing API" product to your application
+4. Generate an access token with the necessary permissions
 
-## Utilisation
+## Usage
 
-1. Sélectionnez un pays dans le menu déroulant
-2. Choisissez les catégories prédéfinies ou ajoutez vos propres catégories personnalisées
-3. Cliquez sur "Rechercher des suggestions"
-4. Attendez que les critères soient générés puis que les suggestions Meta soient récupérées
-5. Explorez les résultats dans le tableau, utilisez les filtres et triez selon vos besoins
-6. Exportez les résultats en CSV pour les utiliser dans vos campagnes publicitaires
+1. Select a country from the dropdown menu
+2. Choose predefined categories or add your own custom categories
+3. Click on "Search for suggestions"
+4. Wait for criteria to be generated and Meta suggestions to be retrieved
+5. Explore the results in the table, use filters and sort according to your needs
+6. Export the results to CSV for use in your advertising campaigns
 
-## Licence
+## License
 
 MIT
 
 ## Contributions
 
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou à soumettre une pull request.
+Contributions are welcome! Feel free to open an issue or submit a pull request.
