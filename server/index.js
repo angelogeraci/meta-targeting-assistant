@@ -6,32 +6,32 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const socketService = require('./services/socket');
 
-// Configuration des variables d'environnement
+// Environment variables configuration
 dotenv.config();
 
-// Import des routes
+// Import routes
 const criteriaRoutes = require('./routes/criteria');
 const metaRoutes = require('./routes/meta');
 const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
 const auth = require('./middleware/auth');
 
-// Connexion à MongoDB
+// MongoDB connection
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI);
-    console.log(`MongoDB connecté: ${conn.connection.host}`);
+    console.log(`MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error(`Erreur de connexion à MongoDB: ${error.message}`);
+    console.error(`MongoDB connection error: ${error.message}`);
     process.exit(1);
   }
 };
 
-// Initialisation de l'application Express
+// Express app initialization
 const app = express();
 const server = http.createServer(app);
 
-// Initialisation de Socket.io
+// Socket.io initialization
 socketService.init(server);
 
 // Middleware
@@ -48,26 +48,26 @@ app.use('/api/meta', auth, metaRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', auth, projectRoutes);
 
-// Route par défaut
+// Default route
 app.get('/', (req, res) => {
-  res.send('API Meta Targeting Assistant');
+  res.send('Meta Targeting Assistant API');
 });
 
-// Gestion des erreurs
+// Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Erreur serveur');
+  res.status(500).send('Server error');
 });
 
-// Port du serveur
+// Server port
 const PORT = process.env.PORT || 5000;
 
-// Démarrage du serveur
+// Start server
 const startServer = async () => {
   await connectDB();
   server.listen(PORT, () => {
-    console.log(`Serveur démarré sur le port ${PORT}`);
-    console.log(`Socket.IO est actif pour les mises à jour en temps réel`);
+    console.log(`Server started on port ${PORT}`);
+    console.log(`Socket.IO is active for real-time updates`);
   });
 };
 
