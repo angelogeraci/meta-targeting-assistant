@@ -54,17 +54,25 @@ const Projects = () => {
   const handleCreateProject = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/projects', currentProject);
+      // Assurez-vous que le statut est conforme aux valeurs acceptées par le modèle
+      const projectToCreate = {
+        ...currentProject,
+        status: 'En cours' // Utiliser la valeur acceptée par le modèle
+      };
+      
+      const response = await axios.post('/api/projects', projectToCreate);
+      const createdProject = response.data;
+      
       setShowCreateModal(false);
       setCurrentProject({
         name: '',
         description: '',
-        status: 'In Progress'
+        status: 'En cours'
       });
       fetchProjects();
       
-      // Redirect to dashboard to start the search
-      navigate('/dashboard');
+      // Redirect to dashboard with the project ID
+      navigate(`/dashboard?projectId=${createdProject._id}`);
     } catch (err) {
       console.error('Error creating project:', err);
       setError('Unable to create project. Please try again later.');
@@ -119,37 +127,64 @@ const Projects = () => {
   };
 
   // Form for creating/editing a project
-  const ProjectForm = ({ onSubmit, buttonText }) => (
-    <Form onSubmit={onSubmit}>
-      <Form.Group className="mb-3">
-        <Form.Label>Project Name</Form.Label>
-        <Form.Control 
-          type="text" 
-          name="name" 
-          value={currentProject.name} 
-          onChange={handleChange} 
-          required 
-          placeholder="Enter a name for your search"
-        />
-      </Form.Group>
-      
-      <Form.Group className="mb-3">
-        <Form.Label>Description</Form.Label>
-        <Form.Control 
-          as="textarea" 
-          rows={3} 
-          name="description" 
-          value={currentProject.description} 
-          onChange={handleChange}
-          placeholder="Describe the purpose of this search"
-        />
-      </Form.Group>
-      
-      <Button variant="primary" type="submit" className="w-100">
-        {buttonText}
-      </Button>
-    </Form>
-  );
+  const ProjectForm = ({ onSubmit, buttonText }) => {
+    const [localProject, setLocalProject] = useState({
+      name: currentProject.name,
+      description: currentProject.description,
+      status: currentProject.status || 'En cours'
+    });
+
+    // Mettre à jour l'état local lors de la saisie
+    const handleLocalChange = (e) => {
+      const { name, value } = e.target;
+      setLocalProject(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    };
+
+    // Soumettre le formulaire avec les données locales
+    const handleLocalSubmit = (e) => {
+      e.preventDefault();
+      // Mettre à jour l'état parent avec les données locales
+      setCurrentProject(localProject);
+      // Appeler la fonction onSubmit du parent
+      onSubmit(e);
+    };
+
+    return (
+      <Form onSubmit={handleLocalSubmit}>
+        <Form.Group className="mb-3">
+          <Form.Label>Project Name</Form.Label>
+          <Form.Control 
+            type="text" 
+            name="name" 
+            value={localProject.name} 
+            onChange={handleLocalChange} 
+            required 
+            placeholder="Enter a name for your search"
+            autoFocus
+          />
+        </Form.Group>
+        
+        <Form.Group className="mb-3">
+          <Form.Label>Description</Form.Label>
+          <Form.Control 
+            as="textarea" 
+            rows={3} 
+            name="description" 
+            value={localProject.description} 
+            onChange={handleLocalChange}
+            placeholder="Describe the purpose of this search"
+          />
+        </Form.Group>
+        
+        <Button variant="primary" type="submit" className="w-100">
+          {buttonText}
+        </Button>
+      </Form>
+    );
+  };
 
   return (
     <Container className="mt-4">
