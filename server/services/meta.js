@@ -1,14 +1,14 @@
 const axios = require('axios');
 
-// Constantes
+// Constants
 const BASE_URL = 'https://graph.facebook.com';
-const API_VERSION = 'v19.0'; // Utilisez la version la plus récente
+const API_VERSION = 'v19.0'; // Use the most recent version
 
 /**
- * Récupère des suggestions d'intérêts Meta pour un critère
- * @param {string} query - Le critère à rechercher
- * @param {string} countryCode - Code pays ISO (ex: BE pour Belgique)
- * @returns {Promise<Array>} - Liste des suggestions
+ * Get Meta interest suggestions for a criterion
+ * @param {string} query - The criterion to search for
+ * @param {string} countryCode - ISO country code (e.g., BE for Belgium)
+ * @returns {Promise<Array>} - List of suggestions
  */
 async function getTargetingSuggestions(query, countryCode) {
   try {
@@ -19,7 +19,7 @@ async function getTargetingSuggestions(query, countryCode) {
       type: 'adinterest',
       q: query,
       limit: 20,
-      locale: 'fr_FR', // Peut être modifié en fonction du pays
+      locale: 'en_US', // Can be modified based on the country
       targeting_spec: JSON.stringify({
         geo_locations: {
           countries: [countryCode],
@@ -29,12 +29,12 @@ async function getTargetingSuggestions(query, countryCode) {
 
     const response = await axios.get(url, { params });
     
-    // Vérifier si la réponse contient des données
+    // Check if the response contains data
     if (!response.data || !response.data.data || response.data.data.length === 0) {
       return [];
     }
 
-    // Extraction et formatage des résultats
+    // Extract and format results
     return response.data.data.map(item => ({
       id: item.id,
       name: item.name,
@@ -44,35 +44,34 @@ async function getTargetingSuggestions(query, countryCode) {
       topic: item.topic || '',
     }));
   } catch (error) {
-    console.error('Erreur lors de la récupération des suggestions Meta:', error.response?.data || error.message);
-    throw new Error('Échec de la récupération des suggestions Meta');
+    console.error('Error retrieving Meta suggestions:', error.response?.data || error.message);
+    throw new Error('Failed to retrieve Meta suggestions');
   }
 }
 
 /**
- * Convertit un nom de pays en code ISO à deux lettres
- * @param {string} country - Nom du pays (ex: "Belgique")
- * @returns {string} - Code ISO du pays (ex: "BE")
+ * Convert a country name to a two-letter ISO code
+ * @param {string} country - Country name (e.g., "Belgium")
+ * @returns {string} - Country ISO code (e.g., "BE")
  */
 function getCountryCode(country) {
   const countryMap = {
-    'belgique': 'BE',
+    'belgium': 'BE',
     'france': 'FR',
-    'suisse': 'CH',
+    'switzerland': 'CH',
     'canada': 'CA',
-    'états-unis': 'US',
-    'etats-unis': 'US',
-    'allemagne': 'DE',
-    'royaume-uni': 'GB',
-    'espagne': 'ES',
-    'italie': 'IT',
-    'pays-bas': 'NL',
+    'united states': 'US',
+    'germany': 'DE',
+    'united kingdom': 'GB',
+    'spain': 'ES',
+    'italy': 'IT',
+    'netherlands': 'NL',
     'portugal': 'PT',
-    // Ajoutez d'autres pays selon vos besoins
+    // Add other countries as needed
   };
 
   const normalizedCountry = country.toLowerCase().trim();
-  return countryMap[normalizedCountry] || 'US'; // Par défaut US si le pays n'est pas trouvé
+  return countryMap[normalizedCountry] || 'US'; // Default to US if country not found
 }
 
 module.exports = {
