@@ -10,25 +10,25 @@ const Projects = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // États pour les modals
+  // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
-  // État pour le projet en cours d'édition/suppression
+  // State for the project being edited/deleted
   const [currentProject, setCurrentProject] = useState({
     name: '',
     description: '',
-    status: 'En cours',
+    status: 'In Progress',
     targetAudience: ''
   });
 
-  // Charger les projets au chargement du composant
+  // Load projects when component mounts
   useEffect(() => {
     fetchProjects();
   }, []);
 
-  // Fonction pour récupérer les projets
+  // Function to fetch projects
   const fetchProjects = async () => {
     try {
       setLoading(true);
@@ -36,13 +36,13 @@ const Projects = () => {
       setProjects(response.data);
       setLoading(false);
     } catch (err) {
-      console.error('Erreur lors de la récupération des projets:', err);
-      setError('Impossible de charger les projets. Veuillez réessayer plus tard.');
+      console.error('Error fetching projects:', err);
+      setError('Unable to load projects. Please try again later.');
       setLoading(false);
     }
   };
 
-  // Gérer les changements dans le formulaire
+  // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCurrentProject(prev => ({
@@ -51,7 +51,7 @@ const Projects = () => {
     }));
   };
 
-  // Créer un nouveau projet
+  // Create a new project
   const handleCreateProject = async (e) => {
     e.preventDefault();
     try {
@@ -60,20 +60,20 @@ const Projects = () => {
       setCurrentProject({
         name: '',
         description: '',
-        status: 'En cours',
+        status: 'In Progress',
         targetAudience: ''
       });
       fetchProjects();
       
-      // Rediriger vers le tableau de bord pour commencer la recherche
+      // Redirect to dashboard to start the search
       navigate('/dashboard');
     } catch (err) {
-      console.error('Erreur lors de la création du projet:', err);
-      setError('Impossible de créer le projet. Veuillez réessayer plus tard.');
+      console.error('Error creating project:', err);
+      setError('Unable to create project. Please try again later.');
     }
   };
 
-  // Mettre à jour un projet
+  // Update a project
   const handleUpdateProject = async (e) => {
     e.preventDefault();
     try {
@@ -81,57 +81,57 @@ const Projects = () => {
       setShowEditModal(false);
       fetchProjects();
     } catch (err) {
-      console.error('Erreur lors de la mise à jour du projet:', err);
-      setError('Impossible de mettre à jour le projet. Veuillez réessayer plus tard.');
+      console.error('Error updating project:', err);
+      setError('Unable to update project. Please try again later.');
     }
   };
 
-  // Supprimer un projet
+  // Delete a project
   const handleDeleteProject = async () => {
     try {
       await axios.delete(`/api/projects/${currentProject._id}`);
       setShowDeleteModal(false);
       fetchProjects();
     } catch (err) {
-      console.error('Erreur lors de la suppression du projet:', err);
-      setError('Impossible de supprimer le projet. Veuillez réessayer plus tard.');
+      console.error('Error deleting project:', err);
+      setError('Unable to delete project. Please try again later.');
     }
   };
 
-  // Ouvrir le modal d'édition avec les données du projet
+  // Open the edit modal with project data
   const openEditModal = (project) => {
     setCurrentProject(project);
     setShowEditModal(true);
   };
 
-  // Ouvrir le modal de suppression avec les données du projet
+  // Open the delete modal with project data
   const openDeleteModal = (project) => {
     setCurrentProject(project);
     setShowDeleteModal(true);
   };
   
-  // Naviguer vers le tableau de bord pour voir les résultats
+  // Navigate to dashboard to view results
   const viewResults = (projectId) => {
     navigate(`/dashboard?projectId=${projectId}`);
   };
   
-  // Commencer une nouvelle recherche
+  // Start a new search
   const startNewSearch = () => {
     setShowCreateModal(true);
   };
 
-  // Formulaire pour créer/éditer un projet
+  // Form for creating/editing a project
   const ProjectForm = ({ onSubmit, buttonText }) => (
     <Form onSubmit={onSubmit}>
       <Form.Group className="mb-3">
-        <Form.Label>Nom du projet</Form.Label>
+        <Form.Label>Project Name</Form.Label>
         <Form.Control 
           type="text" 
           name="name" 
           value={currentProject.name} 
           onChange={handleChange} 
           required 
-          placeholder="Entrez un nom pour votre recherche"
+          placeholder="Enter a name for your search"
         />
       </Form.Group>
       
@@ -143,18 +143,18 @@ const Projects = () => {
           name="description" 
           value={currentProject.description} 
           onChange={handleChange}
-          placeholder="Décrivez l'objectif de cette recherche"
+          placeholder="Describe the purpose of this search"
         />
       </Form.Group>
       
       <Form.Group className="mb-3">
-        <Form.Label>Public cible</Form.Label>
+        <Form.Label>Target Audience</Form.Label>
         <Form.Control 
           type="text" 
           name="targetAudience" 
           value={currentProject.targetAudience} 
           onChange={handleChange}
-          placeholder="Décrivez le public cible (optionnel)"
+          placeholder="Describe the target audience (optional)"
         />
       </Form.Group>
       
@@ -168,12 +168,12 @@ const Projects = () => {
     <Container className="mt-4">
       <Row className="mb-4">
         <Col>
-          <h1>Mes Recherches</h1>
-          <p className="text-muted">Gérez vos recherches de critères publicitaires et accédez aux résultats</p>
+          <h1>My Searches</h1>
+          <p className="text-muted">Manage your advertising criteria searches and access results</p>
         </Col>
         <Col xs="auto" className="d-flex align-items-center">
           <Button variant="primary" onClick={startNewSearch}>
-            <FaPlus className="me-2" /> Nouvelle Recherche
+            <FaPlus className="me-2" /> New Search
           </Button>
         </Col>
       </Row>
@@ -189,7 +189,7 @@ const Projects = () => {
       {loading ? (
         <div className="text-center my-5">
           <div className="spinner-border" role="status">
-            <span className="visually-hidden">Chargement...</span>
+            <span className="visually-hidden">Loading...</span>
           </div>
         </div>
       ) : (
@@ -198,12 +198,12 @@ const Projects = () => {
             <Col>
               <Card className="text-center p-5">
                 <Card.Body>
-                  <Card.Title className="mb-3">Aucune recherche</Card.Title>
+                  <Card.Title className="mb-3">No searches</Card.Title>
                   <Card.Text className="mb-4">
-                    Vous n'avez pas encore créé de recherche. Commencez par créer une nouvelle recherche pour trouver des critères publicitaires pertinents.
+                    You haven't created any searches yet. Start by creating a new search to find relevant advertising criteria.
                   </Card.Text>
                   <Button variant="primary" onClick={startNewSearch}>
-                    <FaPlus className="me-2" /> Commencer une recherche
+                    <FaPlus className="me-2" /> Start a search
                   </Button>
                 </Card.Body>
               </Card>
@@ -215,11 +215,11 @@ const Projects = () => {
                   <Table hover responsive className="mb-0">
                     <thead className="bg-light">
                       <tr>
-                        <th>Nom</th>
+                        <th>Name</th>
                         <th>Description</th>
-                        <th>Statut</th>
-                        <th>Public cible</th>
-                        <th>Date de création</th>
+                        <th>Status</th>
+                        <th>Target Audience</th>
+                        <th>Creation Date</th>
                         <th className="text-center">Actions</th>
                       </tr>
                     </thead>
@@ -230,8 +230,8 @@ const Projects = () => {
                           <td>{project.description || '-'}</td>
                           <td>
                             <Badge bg={
-                              project.status === 'En cours' ? 'primary' : 
-                              project.status === 'Terminé' ? 'success' : 'warning'
+                              project.status === 'In Progress' ? 'primary' : 
+                              project.status === 'Completed' ? 'success' : 'warning'
                             }>
                               {project.status}
                             </Badge>
@@ -245,7 +245,7 @@ const Projects = () => {
                                 size="sm" 
                                 className="me-2"
                                 onClick={() => viewResults(project._id)}
-                                title="Voir les résultats"
+                                title="View results"
                               >
                                 <FaSearch />
                               </Button>
@@ -254,7 +254,7 @@ const Projects = () => {
                                 size="sm" 
                                 className="me-2"
                                 onClick={() => openEditModal(project)}
-                                title="Modifier"
+                                title="Edit"
                               >
                                 <FaEdit />
                               </Button>
@@ -262,7 +262,7 @@ const Projects = () => {
                                 variant="outline-danger" 
                                 size="sm"
                                 onClick={() => openDeleteModal(project)}
-                                title="Supprimer"
+                                title="Delete"
                               >
                                 <FaTrash />
                               </Button>
@@ -279,46 +279,46 @@ const Projects = () => {
         </Row>
       )}
       
-      {/* Modal de création */}
+      {/* Create Modal */}
       <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Nouvelle recherche</Modal.Title>
+          <Modal.Title>New Search</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <p className="text-muted mb-3">
-            Créez une nouvelle recherche pour trouver des critères publicitaires pertinents. 
-            Après avoir créé la recherche, vous serez redirigé vers le tableau de bord pour 
-            sélectionner les catégories et le pays cible.
+            Create a new search to find relevant advertising criteria.
+            After creating the search, you will be redirected to the dashboard to
+            select categories and target country.
           </p>
-          <ProjectForm onSubmit={handleCreateProject} buttonText="Créer et commencer la recherche" />
+          <ProjectForm onSubmit={handleCreateProject} buttonText="Create and start search" />
         </Modal.Body>
       </Modal>
       
-      {/* Modal d'édition */}
+      {/* Edit Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Modifier la recherche</Modal.Title>
+          <Modal.Title>Edit Search</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <ProjectForm onSubmit={handleUpdateProject} buttonText="Mettre à jour" />
+          <ProjectForm onSubmit={handleUpdateProject} buttonText="Update" />
         </Modal.Body>
       </Modal>
       
-      {/* Modal de suppression */}
+      {/* Delete Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Confirmer la suppression</Modal.Title>
+          <Modal.Title>Confirm Deletion</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Êtes-vous sûr de vouloir supprimer la recherche "{currentProject.name}" ?</p>
-          <p className="text-danger">Cette action est irréversible et supprimera tous les résultats associés.</p>
+          <p>Are you sure you want to delete the search "{currentProject.name}"?</p>
+          <p className="text-danger">This action is irreversible and will delete all associated results.</p>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Annuler
+            Cancel
           </Button>
           <Button variant="danger" onClick={handleDeleteProject}>
-            Supprimer
+            Delete
           </Button>
         </Modal.Footer>
       </Modal>
@@ -326,4 +326,4 @@ const Projects = () => {
   );
 };
 
-export default Projects; 
+export default Projects;
