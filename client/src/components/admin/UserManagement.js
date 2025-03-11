@@ -32,20 +32,20 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      setError(null); // Réinitialiser l'erreur avant de commencer
+      setError(null); // Reset error before starting
       const userData = await getUsers();
       
       if (userData && Array.isArray(userData)) {
         setUsers(userData);
       } else {
-        console.warn('Format de données utilisateur inattendu:', userData);
+        console.warn('Unexpected user data format:', userData);
         setUsers([]);
-        setError('Format de données utilisateur inattendu.');
+        setError('Unexpected user data format.');
       }
     } catch (err) {
-      console.error('Erreur lors de la récupération des utilisateurs:', err);
-      setError('Erreur lors de la récupération des utilisateurs. Les données seront chargées si disponibles.');
-      // Ne pas bloquer l'affichage des utilisateurs si certains sont déjà chargés
+      console.error('Error retrieving users:', err);
+      setError('Error retrieving users. Data will load if available.');
+      // Don't block the user list display if some are already loaded
     } finally {
       setLoading(false);
     }
@@ -100,7 +100,7 @@ const UserManagement = () => {
         await fetchUsers();
         handleModalClose();
       } catch (err) {
-        setError('Une erreur est survenue lors de la suppression.');
+        setError('An error occurred during deletion.');
         console.error(err);
       } finally {
         setLoading(false);
@@ -123,57 +123,57 @@ const UserManagement = () => {
         await updateUser(selectedUser._id, formData);
       }
       
-      // Rafraîchir la liste des utilisateurs
+      // Refresh user list
       await fetchUsers();
       
-      // Fermer le modal
+      // Close modal
       handleModalClose();
     } catch (err) {
-      setError('Une erreur est survenue lors de l\'opération.');
+      setError('An error occurred during the operation.');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Rendu du formulaire d'utilisateur (ajout/modification)
+  // Render the user form (add/edit)
   const renderUserForm = () => (
     <Form id="user-form" noValidate validated={validated} onSubmit={handleSubmit}>
       <Row>
         <Col md={6}>
           <Form.Group className="mb-3">
-            <Form.Label>Prénom</Form.Label>
+            <Form.Label>First Name</Form.Label>
             <InputGroup>
               <InputGroup.Text><FaUser /></InputGroup.Text>
               <Form.Control
                 type="text"
-                placeholder="Prénom"
+                placeholder="First Name"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleInputChange}
                 required
               />
               <Form.Control.Feedback type="invalid">
-                Le prénom est requis.
+                First name is required.
               </Form.Control.Feedback>
             </InputGroup>
           </Form.Group>
         </Col>
         <Col md={6}>
           <Form.Group className="mb-3">
-            <Form.Label>Nom</Form.Label>
+            <Form.Label>Last Name</Form.Label>
             <InputGroup>
               <InputGroup.Text><FaUser /></InputGroup.Text>
               <Form.Control
                 type="text"
-                placeholder="Nom"
+                placeholder="Last Name"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleInputChange}
                 required
               />
               <Form.Control.Feedback type="invalid">
-                Le nom est requis.
+                Last name is required.
               </Form.Control.Feedback>
             </InputGroup>
           </Form.Group>
@@ -181,7 +181,7 @@ const UserManagement = () => {
       </Row>
 
       <Form.Group className="mb-3">
-        <Form.Label>Adresse e-mail</Form.Label>
+        <Form.Label>Email Address</Form.Label>
         <InputGroup>
           <InputGroup.Text><FaEnvelope /></InputGroup.Text>
           <Form.Control
@@ -193,19 +193,19 @@ const UserManagement = () => {
             required
           />
           <Form.Control.Feedback type="invalid">
-            Veuillez fournir une adresse e-mail valide.
+            Please provide a valid email address.
           </Form.Control.Feedback>
         </InputGroup>
       </Form.Group>
 
       {modalType === 'add' && (
         <Form.Group className="mb-3">
-          <Form.Label>Mot de passe</Form.Label>
+          <Form.Label>Password</Form.Label>
           <InputGroup>
             <InputGroup.Text><FaLock /></InputGroup.Text>
             <Form.Control
               type="password"
-              placeholder="Mot de passe"
+              placeholder="Password"
               name="password"
               value={formData.password}
               onChange={handleInputChange}
@@ -213,22 +213,22 @@ const UserManagement = () => {
               minLength="6"
             />
             <Form.Control.Feedback type="invalid">
-              Le mot de passe doit contenir au moins 6 caractères.
+              Password must be at least 6 characters.
             </Form.Control.Feedback>
           </InputGroup>
         </Form.Group>
       )}
 
       <Form.Group className="mb-3">
-        <Form.Label>Rôle</Form.Label>
+        <Form.Label>Role</Form.Label>
         <Form.Select
           name="role"
           value={formData.role}
           onChange={handleInputChange}
           required
         >
-          <option value="user">Utilisateur</option>
-          <option value="admin">Administrateur</option>
+          <option value="user">User</option>
+          <option value="admin">Administrator</option>
         </Form.Select>
       </Form.Group>
 
@@ -236,7 +236,7 @@ const UserManagement = () => {
         <Form.Check
           type="switch"
           id="user-active"
-          label="Compte actif"
+          label="Active Account"
           name="active"
           checked={formData.active}
           onChange={handleInputChange}
@@ -245,33 +245,33 @@ const UserManagement = () => {
     </Form>
   );
 
-  // Rendu du modal de confirmation de suppression
+  // Render the delete confirmation modal
   const renderDeleteConfirmation = () => (
     <div className="text-center py-3">
-      <p className="mb-1">Êtes-vous sûr de vouloir supprimer cet utilisateur ?</p>
+      <p className="mb-1">Are you sure you want to delete this user?</p>
       <h5 className="mb-3">{selectedUser?.firstName} {selectedUser?.lastName}</h5>
-      <p className="text-muted small">Cette action est irréversible.</p>
+      <p className="text-muted small">This action is irreversible.</p>
     </div>
   );
 
-  // Titre et message d'explication du modal
+  // Modal title and explanation message
   const getModalConfig = () => {
     if (modalType === 'add') {
       return {
-        title: 'Ajouter un nouvel utilisateur',
-        buttonText: 'Ajouter',
+        title: 'Add New User',
+        buttonText: 'Add',
         variant: 'primary'
       };
     } else if (modalType === 'edit') {
       return {
-        title: 'Modifier un utilisateur',
-        buttonText: 'Enregistrer',
+        title: 'Edit User',
+        buttonText: 'Save',
         variant: 'primary'
       };
     } else {
       return {
-        title: 'Supprimer un utilisateur',
-        buttonText: 'Supprimer',
+        title: 'Delete User',
+        buttonText: 'Delete',
         variant: 'danger'
       };
     }
@@ -285,14 +285,14 @@ const UserManagement = () => {
         <Card.Header className="d-flex justify-content-between align-items-center">
           <h5 className="mb-0">
             <FaUsersCog className="me-2" />
-            Gestion des utilisateurs
+            User Management
           </h5>
           <Button 
             variant="primary" 
             size="sm" 
             onClick={() => handleModalShow('add')}
           >
-            <FaUserPlus className="me-1" /> Ajouter un utilisateur
+            <FaUserPlus className="me-1" /> Add User
           </Button>
         </Card.Header>
         <Card.Body>
@@ -301,18 +301,18 @@ const UserManagement = () => {
           {loading && !users.length ? (
             <div className="text-center py-4">
               <Spinner animation="border" variant="primary" />
-              <p className="mt-2">Chargement des utilisateurs...</p>
+              <p className="mt-2">Loading users...</p>
             </div>
           ) : (
             <div className="table-responsive">
               <Table striped hover>
                 <thead>
                   <tr>
-                    <th>Utilisateur</th>
+                    <th>User</th>
                     <th>Email</th>
-                    <th>Rôle</th>
-                    <th>Statut</th>
-                    <th>Dernière connexion</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Last Login</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -326,28 +326,28 @@ const UserManagement = () => {
                           </div>
                           <div>
                             <div className="fw-medium">{user.firstName} {user.lastName}</div>
-                            <div className="text-muted small">Créé le {formatDate(user.createdAt)}</div>
+                            <div className="text-muted small">Created {formatDate(user.createdAt)}</div>
                           </div>
                         </div>
                       </td>
                       <td>{user.email}</td>
                       <td>
                         <Badge bg={user.role === 'admin' ? 'danger' : 'info'} className="user-badge">
-                          {user.role === 'admin' ? 'Administrateur' : 'Utilisateur'}
+                          {user.role === 'admin' ? 'Administrator' : 'User'}
                         </Badge>
                       </td>
                       <td>
                         {user.active ? (
                           <Badge bg="success" className="user-badge">
-                            <FaCheck className="me-1" /> Actif
+                            <FaCheck className="me-1" /> Active
                           </Badge>
                         ) : (
                           <Badge bg="secondary" className="user-badge">
-                            <FaTimes className="me-1" /> Inactif
+                            <FaTimes className="me-1" /> Inactive
                           </Badge>
                         )}
                       </td>
-                      <td>{user.lastLogin ? formatDate(user.lastLogin) : 'Jamais'}</td>
+                      <td>{user.lastLogin ? formatDate(user.lastLogin) : 'Never'}</td>
                       <td>
                         <div className="user-actions">
                           <Button 
@@ -373,7 +373,7 @@ const UserManagement = () => {
                   {users.length === 0 && !loading && (
                     <tr>
                       <td colSpan="6" className="text-center py-3">
-                        <p className="mb-0 text-muted">Aucun utilisateur trouvé</p>
+                        <p className="mb-0 text-muted">No users found</p>
                       </td>
                     </tr>
                   )}
@@ -384,7 +384,7 @@ const UserManagement = () => {
         </Card.Body>
       </Card>
 
-      {/* Modal pour ajouter/modifier/supprimer un utilisateur */}
+      {/* Modal for adding/editing/deleting a user */}
       <Modal show={showModal} onHide={handleModalClose} centered>
         <Modal.Header closeButton>
           <Modal.Title>{modalConfig.title}</Modal.Title>
@@ -397,7 +397,7 @@ const UserManagement = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleModalClose}>
-            Annuler
+            Cancel
           </Button>
           <Button 
             variant={modalConfig.variant} 
@@ -414,7 +414,7 @@ const UserManagement = () => {
                   aria-hidden="true"
                   className="me-2"
                 />
-                Chargement...
+                Loading...
               </>
             ) : (
               modalConfig.buttonText
