@@ -60,14 +60,14 @@ app.use((err, req, res, next) => {
 });
 
 // Server port
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Start server
 const startServer = async () => {
   await connectDB();
   server.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
-    console.log(`Socket.IO is active for real-time updates`);
+    console.log(`Serveur démarré sur le port ${PORT}`);
+    console.log(`Socket.IO est actif pour les mises à jour en temps réel`);
   });
 };
 
