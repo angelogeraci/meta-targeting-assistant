@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { Form, Button, InputGroup } from 'react-bootstrap';
 
 /**
- * Composant de sélection des catégories
- * @param {Array} categories - Liste des catégories disponibles
- * @param {Array} selectedCategories - IDs des catégories sélectionnées
- * @param {function} onCategoryChange - Fonction appelée lors du changement de sélection
- * @param {boolean} disabled - Désactive les contrôles si true
- * @param {function} onAddCustomCategory - Fonction pour ajouter une catégorie personnalisée
+ * Category selection component
+ * @param {Array} categories - List of available categories
+ * @param {Array} selectedCategories - IDs of selected categories
+ * @param {function} onCategoryChange - Function called when selection changes
+ * @param {boolean} disabled - Disables controls if true
+ * @param {function} onAddCustomCategory - Function to add a custom category
  */
 const CategorySelector = ({ 
   categories, 
@@ -19,23 +19,23 @@ const CategorySelector = ({
   
   const [newCategory, setNewCategory] = useState('');
   
-  // Gestion des cases à cocher
+  // Checkbox handler
   const handleCheckboxChange = (e) => {
     const categoryId = e.target.value;
     const isChecked = e.target.checked;
     
     if (isChecked) {
-      // Ajouter la catégorie si elle n'est pas déjà sélectionnée
+      // Add the category if it's not already selected
       if (!selectedCategories.includes(categoryId)) {
         onCategoryChange([...selectedCategories, categoryId]);
       }
     } else {
-      // Supprimer la catégorie
+      // Remove the category
       onCategoryChange(selectedCategories.filter(id => id !== categoryId));
     }
   };
   
-  // Sélectionner ou désélectionner toutes les catégories
+  // Select or deselect all categories
   const handleSelectAll = (select) => {
     if (select) {
       onCategoryChange(categories.map(category => category.id));
@@ -44,7 +44,7 @@ const CategorySelector = ({
     }
   };
   
-  // Gestion de l'ajout d'une catégorie personnalisée
+  // Handle adding a custom category
   const handleAddCategory = () => {
     if (newCategory.trim() !== '') {
       onAddCustomCategory(newCategory.trim());
@@ -52,7 +52,7 @@ const CategorySelector = ({
     }
   };
   
-  // Gestion de la soumission du formulaire (pour éviter le rechargement de la page)
+  // Handle form submission (to prevent page reload)
   const handleSubmit = (e) => {
     e.preventDefault();
     handleAddCategory();
@@ -61,7 +61,7 @@ const CategorySelector = ({
   return (
     <Form.Group className="mb-3">
       <Form.Label>
-        <strong>Catégories</strong>
+        <strong>Categories</strong>
       </Form.Label>
       
       <div className="mb-2">
@@ -71,7 +71,7 @@ const CategorySelector = ({
           onClick={() => handleSelectAll(true)}
           disabled={disabled}
         >
-          Tout sélectionner
+          Select All
         </button>
         <button 
           type="button" 
@@ -79,16 +79,16 @@ const CategorySelector = ({
           onClick={() => handleSelectAll(false)}
           disabled={disabled}
         >
-          Tout désélectionner
+          Deselect All
         </button>
       </div>
       
-      {/* Ajout d'une catégorie personnalisée */}
+      {/* Add a custom category */}
       <Form onSubmit={handleSubmit} className="mb-3">
         <InputGroup>
           <Form.Control
             type="text"
-            placeholder="Ajouter une catégorie personnalisée"
+            placeholder="Add a custom category"
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value)}
             disabled={disabled}
@@ -98,11 +98,11 @@ const CategorySelector = ({
             onClick={handleAddCategory}
             disabled={disabled || newCategory.trim() === ''}
           >
-            Ajouter
+            Add
           </Button>
         </InputGroup>
         <Form.Text className="text-muted">
-          Saisissez un nom de catégorie personnalisée et cliquez sur "Ajouter"
+          Enter a custom category name and click "Add"
         </Form.Text>
       </Form>
       
@@ -123,7 +123,7 @@ const CategorySelector = ({
       </div>
       
       <Form.Text className="text-muted">
-        Sélectionnez les catégories pour lesquelles vous souhaitez des suggestions.
+        Select the categories for which you want suggestions.
       </Form.Text>
     </Form.Group>
   );
