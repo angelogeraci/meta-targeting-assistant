@@ -17,12 +17,12 @@ const SoprismExportModal = ({ show, onHide, results, selectedCountry }) => {
   const [description, setDescription] = useState('');
   const [excludeDefault, setExcludeDefault] = useState(false);
   const [avoidDuplicates, setAvoidDuplicates] = useState(true);
-  const [soprismCredentials, setSoprismCredentials] = useState({ username: '', password: '' });
+  const [apiToken, setApiToken] = useState('');
+  const [apiUrl, setApiUrl] = useState('https://api.soprism.com');
   
   // Process states
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [step, setStep] = useState(1); // 1: Config, 2: Authentication, 3: Processing
   
   // ISO 3166-2 country codes mapping
   const countryCodeMapping = {
@@ -47,14 +47,13 @@ const SoprismExportModal = ({ show, onHide, results, selectedCountry }) => {
   
   // Reset state when modal closes
   const handleClose = () => {
-    setStep(1);
     setErrorMessage('');
     setIsLoading(false);
     onHide();
   };
   
-  // Move to authentication step
-  const handleContinue = () => {
+  // Handle export to Soprism
+  const handleExport = async () => {
     // Validate required fields
     if (!universeName.trim()) {
       setErrorMessage('Universe name is required');
@@ -66,48 +65,29 @@ const SoprismExportModal = ({ show, onHide, results, selectedCountry }) => {
       return;
     }
     
-    setErrorMessage('');
-    setStep(2);
-  };
-  
-  // Handle export to Soprism
-  const handleExport = async () => {
-    if (!soprismCredentials.username || !soprismCredentials.password) {
-      setErrorMessage('Soprism credentials are required');
+    if (!apiToken.trim()) {
+      setErrorMessage('Soprism API token is required');
       return;
     }
     
     setIsLoading(true);
     setErrorMessage('');
-    setStep(3);
     
     try {
-      // 1. Authenticate with Soprism
-      const authResponse = await axios.post('/api/soprism/authenticate', soprismCredentials);
-      
-      if (!authResponse.data.success || !authResponse.data.token) {
-        throw new Error('Authentication failed');
-      }
-      
-      const token = authResponse.data.token;
-      
-      // 2. Format data for Soprism export
+      // Format data for Soprism export
       const exportData = {
         universeName,
         countryRef,
         description,
         excludeDefault,
         avoidDuplicates,
+        apiToken,
+        apiUrl,
         results: formatResultsForSoprism(results)
       };
       
-      // 3. Send export request
-      const exportResponse = await axios.post('/api/soprism/export', 
-        exportData,
-        { 
-          headers: { 'Authorization': `Bearer ${token}` }
-        }
-      );
+      // Send export request
+      const exportResponse = await axios.post('/api/soprism/export', exportData);
       
       if (exportResponse.data.success) {
         toast.success('Data successfully exported to Soprism!');
@@ -117,8 +97,7 @@ const SoprismExportModal = ({ show, onHide, results, selectedCountry }) => {
       }
     } catch (error) {
       console.error('Export error:', error);
-      setErrorMessage(error.message || 'Failed to export data to Soprism');
-      setStep(2); // Go back to authentication step
+      setErrorMessage(error.response?.data?.message || error.message || 'Failed to export data to Soprism');
     } finally {
       setIsLoading(false);
     }
@@ -152,101 +131,109 @@ const SoprismExportModal = ({ show, onHide, results, selectedCountry }) => {
           <Alert variant="danger">{errorMessage}</Alert>
         )}
         
-        {step === 1 && (
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Universe Name <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="text"
-                value={universeName}
-                onChange={(e) => setUniverseName(e.target.value)}
-                placeholder="Enter universe name"
-                required
-              />
-              <Form.Text>
-                Name of the universe to create or update in Soprism
-              </Form.Text>
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Country Reference <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="text"
-                value={countryRef}
-                onChange={(e) => setCountryRef(e.target.value)}
-                placeholder="ISO 3166-2 country code (e.g., FR, US)"
-                maxLength={10}
-                required
-              />
-              <Form.Text>
-                ISO 3166-2 country code. Must be unique for each universe.
-              </Form.Text>
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter universe description"
-              />
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Check
-                type="checkbox"
-                label="Exclude Default Universe"
-                checked={excludeDefault}
-                onChange={(e) => setExcludeDefault(e.target.checked)}
-              />
-              <Form.Text>
-                When enabled, this universe will exclude the default universe in project creation
-              </Form.Text>
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Check
-                type="checkbox"
-                label="Avoid Duplicates"
-                checked={avoidDuplicates}
-                onChange={(e) => setAvoidDuplicates(e.target.checked)}
-              />
-              <Form.Text>
-                When enabled, criteria matching existing ones will be linked rather than duplicated
-              </Form.Text>
-            </Form.Group>
-          </Form>
-        )}
+        <Form>
+          <Form.Group className="mb-3">
+            <Form.Label>Universe Name <span className="text-danger">*</span></Form.Label>
+            <Form.Control
+              type="text"
+              value={universeName}
+              onChange={(e) => setUniverseName(e.target.value)}
+              placeholder="Enter universe name"
+              required
+              disabled={isLoading}
+            />
+            <Form.Text>
+              Name of the universe to create or update in Soprism
+            </Form.Text>
+          </Form.Group>
+          
+          <Form.Group className="mb-3">
+            <Form.Label>Country Reference <span className="text-danger">*</span></Form.Label>
+            <Form.Control
+              type="text"
+              value={countryRef}
+              onChange={(e) => setCountryRef(e.target.value)}
+              placeholder="ISO 3166-2 country code (e.g., FR, US)"
+              maxLength={10}
+              required
+              disabled={isLoading}
+            />
+            <Form.Text>
+              ISO 3166-2 country code. Must be unique for each universe.
+            </Form.Text>
+          </Form.Group>
+          
+          <Form.Group className="mb-3">
+            <Form.Label>Description</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Enter universe description"
+              disabled={isLoading}
+            />
+          </Form.Group>
+          
+          <Form.Group className="mb-3">
+            <Form.Check
+              type="checkbox"
+              label="Exclude Default Universe"
+              checked={excludeDefault}
+              onChange={(e) => setExcludeDefault(e.target.checked)}
+              disabled={isLoading}
+            />
+            <Form.Text>
+              When enabled, this universe will exclude the default universe in project creation
+            </Form.Text>
+          </Form.Group>
+          
+          <Form.Group className="mb-3">
+            <Form.Check
+              type="checkbox"
+              label="Avoid Duplicates"
+              checked={avoidDuplicates}
+              onChange={(e) => setAvoidDuplicates(e.target.checked)}
+              disabled={isLoading}
+            />
+            <Form.Text>
+              When enabled, criteria matching existing ones will be linked rather than duplicated
+            </Form.Text>
+          </Form.Group>
+          
+          <hr />
+          
+          <Form.Group className="mb-3">
+            <Form.Label>Soprism API URL</Form.Label>
+            <Form.Control
+              type="text"
+              value={apiUrl}
+              onChange={(e) => setApiUrl(e.target.value)}
+              placeholder="https://api.soprism.com"
+              disabled={isLoading}
+            />
+            <Form.Text>
+              The URL of Soprism API (default: https://api.soprism.com)
+            </Form.Text>
+          </Form.Group>
+          
+          <Form.Group className="mb-3">
+            <Form.Label>Soprism API Token <span className="text-danger">*</span></Form.Label>
+            <Form.Control
+              type="password"
+              value={apiToken}
+              onChange={(e) => setApiToken(e.target.value)}
+              placeholder="Enter your Soprism Bearer token"
+              required
+              disabled={isLoading}
+            />
+            <Form.Text>
+              The Bearer token for Soprism API authentication. You can obtain this from Postman as described in the documentation.
+            </Form.Text>
+          </Form.Group>
+        </Form>
         
-        {step === 2 && (
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Soprism Username <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="text"
-                value={soprismCredentials.username}
-                onChange={(e) => setSoprismCredentials({...soprismCredentials, username: e.target.value})}
-                placeholder="Enter Soprism username"
-                required
-              />
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Soprism Password <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="password"
-                value={soprismCredentials.password}
-                onChange={(e) => setSoprismCredentials({...soprismCredentials, password: e.target.value})}
-                placeholder="Enter Soprism password"
-                required
-              />
-            </Form.Group>
-          </Form>
-        )}
-        
-        {step === 3 && isLoading && (
+        {isLoading && (
           <div className="text-center py-4">
             <Spinner animation="border" variant="primary" />
             <p className="mt-3">Exporting data to Soprism...</p>
@@ -259,17 +246,9 @@ const SoprismExportModal = ({ show, onHide, results, selectedCountry }) => {
           Cancel
         </Button>
         
-        {step === 1 && (
-          <Button variant="primary" onClick={handleContinue}>
-            Continue
-          </Button>
-        )}
-        
-        {step === 2 && (
-          <Button variant="success" onClick={handleExport} disabled={isLoading}>
-            {isLoading ? 'Exporting...' : 'Export to Soprism'}
-          </Button>
-        )}
+        <Button variant="primary" onClick={handleExport} disabled={isLoading}>
+          {isLoading ? 'Exporting...' : 'Export to Soprism'}
+        </Button>
       </Modal.Footer>
     </Modal>
   );
