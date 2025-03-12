@@ -16,8 +16,9 @@ router.post('/export', auth, async (req, res) => {
       description, 
       excludeDefault, 
       avoidDuplicates,
-      apiToken,
       apiUrl,
+      username,
+      password,
       results 
     } = req.body;
     
@@ -26,13 +27,6 @@ router.post('/export', auth, async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Universe name and country reference are required'
-      });
-    }
-    
-    if (!apiToken) {
-      return res.status(400).json({
-        success: false,
-        message: 'Soprism API token is required'
       });
     }
     
@@ -48,8 +42,19 @@ router.post('/export', auth, async (req, res) => {
       soprismService.setApiUrl(apiUrl);
     }
     
+    // Try to get authentication token
+    let token = null;
+    try {
+      token = await soprismService.getAuthToken(username, password);
+    } catch (authError) {
+      return res.status(401).json({
+        success: false,
+        message: authError.message
+      });
+    }
+    
     // Step 1: Generate and upload Excel file
-    const fileUploadResult = await soprismService.uploadSpreadsheet(results, apiToken);
+    const fileUploadResult = await soprismService.uploadSpreadsheet(results, token);
     
     if (!fileUploadResult.success) {
       throw new Error('Failed to upload spreadsheet: ' + fileUploadResult.message);
@@ -63,7 +68,7 @@ router.post('/export', auth, async (req, res) => {
       description: description || `Universe created from Meta Targeting Assistant on ${new Date().toLocaleDateString()}`,
       exclude_default: excludeDefault || false,
       avoid_duplicates: avoidDuplicates !== false, // Default to true if not specified
-    }, apiToken);
+    }, token);
     
     res.json({
       success: true,
