@@ -54,7 +54,24 @@ router.post('/export', auth, async (req, res) => {
     }
     
     // Step 1: Generate and upload Excel file
-    const fileUploadResult = await soprismService.uploadSpreadsheet(results, token);
+    let fileUploadResult;
+    try {
+      fileUploadResult = await soprismService.uploadSpreadsheet(results, token);
+    } catch (error) {
+      // Si l'erreur contient "File uploaded", c'est en fait un succès
+      if (error.message && error.message.includes("File uploaded")) {
+        console.log("Intercepting 'File uploaded' error and treating it as success");
+        fileUploadResult = {
+          success: true,
+          fileName: `soprism_export_${Date.now()}.xlsx`,
+          fileId: null
+        };
+      } else {
+        // Propager les autres erreurs
+        console.error("Spreadsheet upload error:", error.message);
+        throw error;
+      }
+    }
     
     if (!fileUploadResult.success) {
       throw new Error('Failed to upload spreadsheet: ' + fileUploadResult.message);
@@ -65,7 +82,7 @@ router.post('/export', auth, async (req, res) => {
       file_name: fileUploadResult.fileName,
       name: universeName,
       country_ref: countryRef,
-      description: description || `Universe created from Meta Targeting Assistant on ${new Date().toLocaleDateString()}`,
+      description: description || `MTA Universe ${new Date().toLocaleDateString()}`,
       exclude_default: excludeDefault || false,
       avoid_duplicates: avoidDuplicates !== false, // Default to true if not specified
     }, token);

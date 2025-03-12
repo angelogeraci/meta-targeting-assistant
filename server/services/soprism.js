@@ -6,12 +6,12 @@ const path = require('path');
 const os = require('os');
 
 // Default base URL
-let SOPRISM_BASE_URL = process.env.SOPRISM_API_URL || 'https://api.soprism.com';
+let SOPRISM_BASE_URL = process.env.SOPRISM_API_URL || 'https://core-dev.soprism.com';
 
 // API endpoints
-const SOPRISM_AUTH_ENDPOINT = '/auth/token';
-const SOPRISM_UPLOAD_ENDPOINT = '/universe/upload';
-const SOPRISM_CREATE_UNIVERSE_ENDPOINT = '/universe/create';
+const SOPRISM_AUTH_ENDPOINT = '/auth';
+const SOPRISM_UPLOAD_ENDPOINT = '/universes/upload/spreadsheet';
+const SOPRISM_CREATE_UNIVERSE_ENDPOINT = '/universes';
 
 // Cache for the auth token to avoid multiple auth requests in a short time
 let cachedToken = null;
@@ -48,12 +48,12 @@ const soprismService = {
 
       // Use provided credentials or fall back to environment variables
       const credentials = {
-        username: username || process.env.SOPRISM_USERNAME,
+        email: username || process.env.SOPRISM_USERNAME,
         password: password || process.env.SOPRISM_PASSWORD
       };
 
       // Validate credentials
-      if (!credentials.username || !credentials.password) {
+      if (!credentials.email || !credentials.password) {
         throw new Error('Soprism credentials are required. Set SOPRISM_USERNAME and SOPRISM_PASSWORD in environment variables.');
       }
 
@@ -82,12 +82,15 @@ const soprismService = {
    * @returns {Promise<Object>} - Upload result
    */
   uploadSpreadsheet: async (results, token = null) => {
+    // Déclarer tempFilePath en dehors du bloc try
+    let tempFilePath;
+    
     try {
       // Get auth token if not provided
       const authToken = token || await soprismService.getAuthToken();
       
       // Create a temp file to store Excel data
-      const tempFilePath = path.join(os.tmpdir(), `soprism_export_${Date.now()}.xlsx`);
+      tempFilePath = path.join(os.tmpdir(), `soprism_export_${Date.now()}.xlsx`);
       
       // Create Excel workbook
       const workbook = new ExcelJS.Workbook();
@@ -137,17 +140,35 @@ const soprismService = {
       // Clean up temp file
       fs.unlinkSync(tempFilePath);
       
-      if (!uploadResponse.data || !uploadResponse.data.success) {
-        throw new Error('File upload failed: ' + (uploadResponse.data?.message || 'Unknown error'));
+      // Si la réponse contient "File uploaded", c'est un succès
+      if (uploadResponse.data === "File uploaded" || (uploadResponse.data && uploadResponse.data.success)) {
+        return {
+          success: true,
+          fileName: path.basename(tempFilePath),
+          fileId: uploadResponse.data.fileId || null // fileId peut être absent dans le cas de "File uploaded"
+        };
       }
       
-      return {
-        success: true,
-        fileName: path.basename(tempFilePath),
-        fileId: uploadResponse.data.fileId
-      };
+      if (!uploadResponse.data) {
+        throw new Error('File upload failed: Unknown error');
+      }
+      
+      throw new Error('File upload failed: ' + (uploadResponse.data.message || 'Unknown error'));
     } catch (error) {
       console.error('Error uploading spreadsheet to Soprism:', error.response?.data || error.message);
+      
+      // Si la réponse contient "File uploaded", c'est un succès malgré l'erreur
+      if (error.response?.data === "File uploaded" || 
+          error.message.includes("File uploaded") || 
+          (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes("File uploaded"))) {
+        console.log("Detected 'File uploaded' in error response, treating as success");
+        return {
+          success: true,
+          fileName: path.basename(tempFilePath || `soprism_export_${Date.now()}.xlsx`),
+          fileId: null
+        };
+      }
+      
       throw new Error('Spreadsheet upload failed: ' + (error.response?.data?.message || error.message));
     }
   },
@@ -163,9 +184,22 @@ const soprismService = {
       // Get auth token if not provided
       const authToken = token || await soprismService.getAuthToken();
       
+      console.log('Creating universe with config:', JSON.stringify(universeConfig));
+      console.log('Endpoint:', `${SOPRISM_BASE_URL}${SOPRISM_CREATE_UNIVERSE_ENDPOINT}`);
+      
+      // Assurons-nous que les paramètres sont au bon format
+      const formattedConfig = {
+        file_name: universeConfig.file_name,
+        name: universeConfig.name,
+        country_ref: universeConfig.country_ref,
+        description: universeConfig.description,
+        exclude_default: universeConfig.exclude_default ? true : false,
+        avoid_duplicates: universeConfig.avoid_duplicates ? true : false
+      };
+      
       const response = await axios.post(
         `${SOPRISM_BASE_URL}${SOPRISM_CREATE_UNIVERSE_ENDPOINT}`,
-        universeConfig,
+        formattedConfig,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -174,17 +208,35 @@ const soprismService = {
         }
       );
       
-      if (!response.data || !response.data.success) {
-        throw new Error('Universe creation failed: ' + (response.data?.message || 'Unknown error'));
+      console.log('Universe creation response:', JSON.stringify(response.data));
+      
+      // Gérer différents formats de réponse possibles
+      if (response.data) {
+        if (response.data.success === false) {
+          throw new Error('Universe creation failed: ' + (response.data.message || 'API reported failure'));
+        }
+        
+        // Si nous avons un ID d'univers ou un message de succès, considérons que c'est un succès
+        if (response.data.id || response.data.universeId || response.data.success === true || 
+            (response.data.message && response.data.message.toLowerCase().includes('success'))) {
+          return {
+            success: true,
+            universeId: response.data.id || response.data.universeId || null,
+            message: response.data.message || 'Universe created successfully'
+          };
+        }
       }
       
+      // Si nous arrivons ici, la réponse n'est pas dans un format attendu
+      console.warn('Unexpected response format from universe creation:', response.data);
       return {
         success: true,
-        universeId: response.data.universeId,
-        message: response.data.message
+        universeId: null,
+        message: 'Universe may have been created, but response format was unexpected'
       };
     } catch (error) {
       console.error('Error creating universe in Soprism:', error.response?.data || error.message);
+      console.error('Full error object:', JSON.stringify(error.response || error, null, 2));
       throw new Error('Universe creation failed: ' + (error.response?.data?.message || error.message));
     }
   }
