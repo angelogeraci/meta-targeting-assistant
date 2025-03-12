@@ -12,13 +12,36 @@ export const AuthProvider = ({ children }) => {
 
   // Configure axios with token
   useEffect(() => {
+    // Définir l'URL de base pour toutes les requêtes axios
+    axios.defaults.baseURL = 'http://localhost:5001';
+    
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       localStorage.setItem('token', token);
+      console.log('Token set in axios headers:', token);
     } else {
       delete axios.defaults.headers.common['Authorization'];
       localStorage.removeItem('token');
+      console.log('No token available, removed from axios headers');
     }
+    
+    // Intercepteur pour ajouter le token à chaque requête
+    const requestInterceptor = axios.interceptors.request.use(
+      config => {
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      error => {
+        return Promise.reject(error);
+      }
+    );
+    
+    return () => {
+      // Nettoyer l'intercepteur lors du démontage du composant
+      axios.interceptors.request.eject(requestInterceptor);
+    };
   }, [token]);
 
   // Load user data from API if token exists
@@ -31,12 +54,18 @@ export const AuthProvider = ({ children }) => {
 
       try {
         setLoading(true);
+        console.log('Loading user with token:', token);
         const res = await axios.get('/api/auth/me');
-        if (res.data.success) {
+        if (res.data && res.data.data) {
+          console.log('User loaded successfully:', res.data.data);
           setCurrentUser(res.data.data);
+        } else {
+          console.error('Invalid response format:', res.data);
+          setError('Erreur lors du chargement des données utilisateur');
+          logout();
         }
       } catch (err) {
-        console.error('Failed to load user:', err);
+        console.error('Failed to load user:', err.response?.data || err.message);
         setError('Votre session a expiré. Veuillez vous reconnecter.');
         logout();
       } finally {
@@ -78,6 +107,7 @@ export const AuthProvider = ({ children }) => {
       const res = await axios.post('/api/auth/login', { email, password });
       
       if (res.data.success) {
+        console.log('Login successful, token received:', res.data.token);
         setToken(res.data.token);
         setCurrentUser(res.data.user);
         toast.success('Connexion réussie!');

@@ -137,6 +137,43 @@ router.post('/batch-suggestions', async (req, res) => {
       }
     }
     
+    // Traiter la file d'attente des audiences de taille 0
+    socketService.emitProgress('meta-progress', {
+      status: 'processing_zero_audience_queue',
+      message: 'Retrying interests with zero audience size...'
+    });
+    
+    const queueResults = await metaService.processZeroAudienceQueue();
+    
+    // Mettre à jour les résultats avec les nouvelles tailles d'audience
+    if (queueResults.updated > 0) {
+      queueResults.updatedInterests.forEach(updatedInterest => {
+        // Trouver le critère correspondant
+        const resultIndex = results.findIndex(r => r.original_criterion === updatedInterest.criterion);
+        if (resultIndex !== -1) {
+          // Mettre à jour la taille d'audience pour tous les matches correspondants
+          results[resultIndex].matches.forEach(match => {
+            if (match.id === updatedInterest.interestId) {
+              match.country_audience_size = updatedInterest.audienceSize;
+            }
+          });
+          
+          // Mettre à jour le meilleur match si nécessaire
+          const bestMatch = results[resultIndex].matches.find(m => m.id === updatedInterest.interestId);
+          if (bestMatch && results[resultIndex].bestMatch && results[resultIndex].bestMatch.id === updatedInterest.interestId) {
+            results[resultIndex].bestMatch.country_audience_size = updatedInterest.audienceSize;
+          }
+        }
+      });
+      
+      // Informer via WebSocket
+      socketService.emitProgress('meta-progress', {
+        status: 'zero_audience_queue_processed',
+        processed: queueResults.processed,
+        updated: queueResults.updated
+      });
+    }
+    
     // Send final event via WebSocket
     socketService.emitProgress('meta-progress', {
       total: totalCriteria,
@@ -150,7 +187,8 @@ router.post('/batch-suggestions', async (req, res) => {
       countryCode,
       data: results,
       total_criteria: criteria.length,
-      processed_criteria: results.length
+      processed_criteria: results.length,
+      zero_audience_queue_results: queueResults
     });
   } catch (error) {
     console.error('Error in /meta/batch-suggestions route:', error);

@@ -36,11 +36,29 @@ exports.getProjectById = async (req, res) => {
 // Fonction pour créer un nouveau projet
 exports.createProject = async (req, res) => {
   try {
-    // S'assurer que le statut est valide selon le modèle
+    const { name } = req.body;
+    
+    // Vérifier que le nom du projet est fourni
+    if (!name) {
+      return res.status(400).json({
+        success: false,
+        message: 'Le nom du projet est requis'
+      });
+    }
+    
+    // Vérifier que l'utilisateur est authentifié
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Utilisateur non authentifié'
+      });
+    }
+
+    // Créer le projet avec les données fournies
     const projectData = {
       ...req.body,
-      status: req.body.status || 'En cours', // Valeur par défaut si non fournie
-      user: req.user ? req.user.id : null // Rendre l'utilisateur optionnel pour le test
+      status: req.body.status || 'En cours',
+      user: req.user.id
     };
 
     const project = new Project(projectData);

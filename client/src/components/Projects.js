@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Modal, Form, Table, Badge } from 'react-bootstrap';
+import React, { useState, useEffect, useContext } from 'react';
+import { Container, Row, Col, Card, Button, Modal, Form, Table, Badge, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import AuthContext from '../context/AuthContext';
 
 const Projects = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, currentUser } = useContext(AuthContext);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,24 +22,35 @@ const Projects = () => {
   const [currentProject, setCurrentProject] = useState({
     name: '',
     description: '',
-    status: 'In Progress'
+    status: 'En cours'
   });
 
   // Load projects when component mounts
   useEffect(() => {
-    fetchProjects();
-  }, []);
+    if (isAuthenticated()) {
+      fetchProjects();
+    } else {
+      setLoading(false);
+      setError('Vous devez être connecté pour voir vos projets.');
+    }
+  }, [isAuthenticated]);
 
   // Function to fetch projects
   const fetchProjects = async () => {
     try {
       setLoading(true);
+      console.log('Fetching projects with auth headers:', axios.defaults.headers.common['Authorization']);
       const response = await axios.get('/api/projects');
       setProjects(response.data);
-      setLoading(false);
+      setError(null);
     } catch (err) {
-      console.error('Error fetching projects:', err);
-      setError('Unable to load projects. Please try again later.');
+      console.error('Error fetching projects:', err.response?.data || err.message);
+      if (err.response?.status === 401) {
+        setError('Vous devez être connecté pour voir vos projets.');
+      } else {
+        setError('Impossible de charger les projets. Veuillez réessayer plus tard.');
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -50,19 +64,88 @@ const Projects = () => {
     }));
   };
 
+  // Form for creating/editing a project
+  const ProjectForm = ({ onSubmit, buttonText }) => {
+    const [localProject, setLocalProject] = useState({
+      name: currentProject.name,
+      description: currentProject.description,
+      status: currentProject.status || 'En cours'
+    });
+
+    // Mettre à jour l'état local lors de la saisie
+    const handleLocalChange = (e) => {
+      const { name, value } = e.target;
+      setLocalProject(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    };
+
+    // Soumettre le formulaire avec les données locales
+    const handleLocalSubmit = (e) => {
+      e.preventDefault();
+      // Appeler la fonction onSubmit du parent avec les données locales
+      onSubmit(e, localProject);
+    };
+
+    return (
+      <Form onSubmit={handleLocalSubmit}>
+        <Form.Group className="mb-3">
+          <Form.Label>Project Name</Form.Label>
+          <Form.Control 
+            type="text" 
+            name="name" 
+            value={localProject.name} 
+            onChange={handleLocalChange} 
+            required 
+            placeholder="Enter a name for your search"
+            autoFocus
+          />
+        </Form.Group>
+        
+        <Form.Group className="mb-3">
+          <Form.Label>Description</Form.Label>
+          <Form.Control 
+            as="textarea" 
+            rows={3} 
+            name="description" 
+            value={localProject.description} 
+            onChange={handleLocalChange}
+            placeholder="Describe the purpose of this search"
+          />
+        </Form.Group>
+        
+        <Button variant="primary" type="submit" className="w-100">
+          {buttonText}
+        </Button>
+      </Form>
+    );
+  };
+
   // Create a new project
-  const handleCreateProject = async (e) => {
+  const handleCreateProject = async (e, formData) => {
     e.preventDefault();
+    
+    if (!isAuthenticated()) {
+      toast.error('Vous devez être connecté pour créer un projet.');
+      return;
+    }
+    
     try {
-      // Assurez-vous que le statut est conforme aux valeurs acceptées par le modèle
+      // Utiliser les données du formulaire directement
       const projectToCreate = {
-        ...currentProject,
-        status: 'En cours' // Utiliser la valeur acceptée par le modèle
+        ...formData,
+        status: 'En cours', // Utiliser la valeur acceptée par le modèle
+        user: currentUser?.id // S'assurer que l'ID de l'utilisateur est inclus
       };
+      
+      console.log('Creating project with data:', projectToCreate);
+      console.log('Auth headers:', axios.defaults.headers.common['Authorization']);
       
       const response = await axios.post('/api/projects', projectToCreate);
       const createdProject = response.data;
       
+      toast.success('Projet créé avec succès!');
       setShowCreateModal(false);
       setCurrentProject({
         name: '',
@@ -74,21 +157,30 @@ const Projects = () => {
       // Redirect to dashboard with the project ID
       navigate(`/dashboard?projectId=${createdProject._id}`);
     } catch (err) {
-      console.error('Error creating project:', err);
-      setError('Unable to create project. Please try again later.');
+      console.error('Error creating project:', err.response?.data || err.message);
+      if (err.response?.status === 401) {
+        toast.error('Vous devez être connecté pour créer un projet.');
+      } else {
+        toast.error(err.response?.data?.message || 'Impossible de créer le projet. Veuillez réessayer plus tard.');
+      }
     }
   };
 
   // Update a project
-  const handleUpdateProject = async (e) => {
+  const handleUpdateProject = async (e, formData) => {
     e.preventDefault();
     try {
-      await axios.put(`/api/projects/${currentProject._id}`, currentProject);
+      // Utiliser les données du formulaire directement
+      await axios.put(`/api/projects/${currentProject._id}`, {
+        ...formData,
+        _id: currentProject._id
+      });
       setShowEditModal(false);
       fetchProjects();
+      toast.success('Projet mis à jour avec succès!');
     } catch (err) {
       console.error('Error updating project:', err);
-      setError('Unable to update project. Please try again later.');
+      toast.error('Impossible de mettre à jour le projet. Veuillez réessayer plus tard.');
     }
   };
 
@@ -124,66 +216,6 @@ const Projects = () => {
   // Start a new search
   const startNewSearch = () => {
     setShowCreateModal(true);
-  };
-
-  // Form for creating/editing a project
-  const ProjectForm = ({ onSubmit, buttonText }) => {
-    const [localProject, setLocalProject] = useState({
-      name: currentProject.name,
-      description: currentProject.description,
-      status: currentProject.status || 'En cours'
-    });
-
-    // Mettre à jour l'état local lors de la saisie
-    const handleLocalChange = (e) => {
-      const { name, value } = e.target;
-      setLocalProject(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    };
-
-    // Soumettre le formulaire avec les données locales
-    const handleLocalSubmit = (e) => {
-      e.preventDefault();
-      // Mettre à jour l'état parent avec les données locales
-      setCurrentProject(localProject);
-      // Appeler la fonction onSubmit du parent
-      onSubmit(e);
-    };
-
-    return (
-      <Form onSubmit={handleLocalSubmit}>
-        <Form.Group className="mb-3">
-          <Form.Label>Project Name</Form.Label>
-          <Form.Control 
-            type="text" 
-            name="name" 
-            value={localProject.name} 
-            onChange={handleLocalChange} 
-            required 
-            placeholder="Enter a name for your search"
-            autoFocus
-          />
-        </Form.Group>
-        
-        <Form.Group className="mb-3">
-          <Form.Label>Description</Form.Label>
-          <Form.Control 
-            as="textarea" 
-            rows={3} 
-            name="description" 
-            value={localProject.description} 
-            onChange={handleLocalChange}
-            placeholder="Describe the purpose of this search"
-          />
-        </Form.Group>
-        
-        <Button variant="primary" type="submit" className="w-100">
-          {buttonText}
-        </Button>
-      </Form>
-    );
   };
 
   return (

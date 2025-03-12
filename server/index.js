@@ -50,7 +50,7 @@ app.use('/api/criteria', auth, criteriaRoutes);
 app.use('/api/meta', auth, metaRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', auth, userRoutes);
-app.use('/api/projects', projectRoutes);
+app.use('/api/projects', auth, projectRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/soprism', auth, soprismRoutes);
 
