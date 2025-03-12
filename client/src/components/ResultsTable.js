@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Table, Button, Badge, Accordion, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { CSVLink } from 'react-csv';
-import { FaFileDownload, FaFilter, FaSort, FaSearch, FaSitemap, FaInfoCircle, FaCheck, FaTrash } from 'react-icons/fa';
+import { FaFileDownload, FaFilter, FaSort, FaSearch, FaSitemap, FaInfoCircle, FaCheck, FaTrash, FaExternalLinkAlt } from 'react-icons/fa';
+import SoprismExportModal from './SoprismExportModal';
 
 /**
  * Component displaying results in a table format
@@ -16,6 +17,9 @@ const ResultsTable = ({ results, selectedCountry, onSelectMatch, onDeleteResults
   const [filterCategory, setFilterCategory] = useState('');
   const [filterScore, setFilterScore] = useState('');
   const [selectedRows, setSelectedRows] = useState([]);
+  
+  // État pour le modal d'export Soprism
+  const [showSoprismModal, setShowSoprismModal] = useState(false);
   
   // Extract unique categories for filtering
   const categories = [...new Set(results.map(result => result.category))];
@@ -203,14 +207,26 @@ const ResultsTable = ({ results, selectedCountry, onSelectMatch, onDeleteResults
             </Button>
           )}
         </div>
-        <CSVLink
-          data={csvData}
-          filename={`meta-targeting-${selectedCountry}-${new Date().toISOString().slice(0, 10)}.csv`}
-          className="btn btn-success"
-        >
-          <FaFileDownload className="me-2" />
-          Export to CSV
-        </CSVLink>
+        <div>
+          {/* Bouton d'export vers Soprism */}
+          <Button 
+            variant="primary" 
+            className="me-2"
+            onClick={() => setShowSoprismModal(true)}
+          >
+            <FaExternalLinkAlt className="me-2" />
+            Export to Soprism
+          </Button>
+          
+          <CSVLink
+            data={csvData}
+            filename={`meta-targeting-${selectedCountry}-${new Date().toISOString().slice(0, 10)}.csv`}
+            className="btn btn-success"
+          >
+            <FaFileDownload className="me-2" />
+            Export to CSV
+          </CSVLink>
+        </div>
       </div>
       
       <div className="filters mb-3">
@@ -454,6 +470,14 @@ const ResultsTable = ({ results, selectedCountry, onSelectMatch, onDeleteResults
           </tbody>
         </Table>
       </div>
+      
+      {/* Modal d'export Soprism */}
+      <SoprismExportModal 
+        show={showSoprismModal}
+        onHide={() => setShowSoprismModal(false)}
+        results={results}
+        selectedCountry={selectedCountry}
+      />
     </div>
   );
 };
