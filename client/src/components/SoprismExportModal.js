@@ -17,8 +17,13 @@ const SoprismExportModal = ({ show, onHide, results, selectedCountry }) => {
   const [description, setDescription] = useState('');
   const [excludeDefault, setExcludeDefault] = useState(false);
   const [avoidDuplicates, setAvoidDuplicates] = useState(true);
-  const [apiToken, setApiToken] = useState('');
-  const [apiUrl, setApiUrl] = useState('https://api.soprism.com');
+  
+  // Advanced settings
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [apiUrl, setApiUrl] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [useCustomCredentials, setUseCustomCredentials] = useState(false);
   
   // Process states
   const [isLoading, setIsLoading] = useState(false);
@@ -65,8 +70,8 @@ const SoprismExportModal = ({ show, onHide, results, selectedCountry }) => {
       return;
     }
     
-    if (!apiToken.trim()) {
-      setErrorMessage('Soprism API token is required');
+    if (useCustomCredentials && (!username.trim() || !password.trim())) {
+      setErrorMessage('Username and password are required when using custom credentials');
       return;
     }
     
@@ -81,10 +86,19 @@ const SoprismExportModal = ({ show, onHide, results, selectedCountry }) => {
         description,
         excludeDefault,
         avoidDuplicates,
-        apiToken,
-        apiUrl,
         results: formatResultsForSoprism(results)
       };
+      
+      // Add custom credentials if specified
+      if (useCustomCredentials) {
+        exportData.username = username;
+        exportData.password = password;
+      }
+      
+      // Add custom API URL if specified
+      if (apiUrl.trim()) {
+        exportData.apiUrl = apiUrl;
+      }
       
       // Send export request
       const exportResponse = await axios.post('/api/soprism/export', exportData);
@@ -201,36 +215,70 @@ const SoprismExportModal = ({ show, onHide, results, selectedCountry }) => {
             </Form.Text>
           </Form.Group>
           
-          <hr />
-          
-          <Form.Group className="mb-3">
-            <Form.Label>Soprism API URL</Form.Label>
-            <Form.Control
-              type="text"
-              value={apiUrl}
-              onChange={(e) => setApiUrl(e.target.value)}
-              placeholder="https://api.soprism.com"
-              disabled={isLoading}
-            />
-            <Form.Text>
-              The URL of Soprism API (default: https://api.soprism.com)
+          <div className="mb-3">
+            <Button 
+              variant="link" 
+              onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+              className="p-0 text-decoration-none"
+            >
+              {showAdvancedSettings ? '▼ ' : '► '} 
+              Advanced Settings
+            </Button>
+            <Form.Text className="text-muted ms-2">
+              (Only required if you don't have Soprism credentials configured in environment variables)
             </Form.Text>
-          </Form.Group>
+          </div>
           
-          <Form.Group className="mb-3">
-            <Form.Label>Soprism API Token <span className="text-danger">*</span></Form.Label>
-            <Form.Control
-              type="password"
-              value={apiToken}
-              onChange={(e) => setApiToken(e.target.value)}
-              placeholder="Enter your Soprism Bearer token"
-              required
-              disabled={isLoading}
-            />
-            <Form.Text>
-              The Bearer token for Soprism API authentication. You can obtain this from Postman as described in the documentation.
-            </Form.Text>
-          </Form.Group>
+          {showAdvancedSettings && (
+            <div className="border p-3 rounded mb-3">
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="checkbox"
+                  label="Use custom credentials instead of environment variables"
+                  checked={useCustomCredentials}
+                  onChange={(e) => setUseCustomCredentials(e.target.checked)}
+                  disabled={isLoading}
+                />
+              </Form.Group>
+              
+              {useCustomCredentials && (
+                <>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Soprism Username</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Enter Soprism username"
+                      disabled={isLoading}
+                    />
+                  </Form.Group>
+                  
+                  <Form.Group className="mb-3">
+                    <Form.Label>Soprism Password</Form.Label>
+                    <Form.Control
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter Soprism password"
+                      disabled={isLoading}
+                    />
+                  </Form.Group>
+                </>
+              )}
+              
+              <Form.Group className="mb-3">
+                <Form.Label>Soprism API URL</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={apiUrl}
+                  onChange={(e) => setApiUrl(e.target.value)}
+                  placeholder="https://api.soprism.com (leave empty to use environment variable)"
+                  disabled={isLoading}
+                />
+              </Form.Group>
+            </div>
+          )}
         </Form>
         
         {isLoading && (
