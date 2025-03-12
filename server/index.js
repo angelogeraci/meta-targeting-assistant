@@ -16,6 +16,7 @@ const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
 const userRoutes = require('./routes/users');
 const categoryRoutes = require('./routes/categories');
+const soprismRoutes = require('./routes/soprism');
 const auth = require('./middleware/auth');
 
 // MongoDB connection
@@ -51,6 +52,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', auth, userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/soprism', auth, soprismRoutes);
 
 // Default route
 app.get('/', (req, res) => {
