@@ -356,6 +356,65 @@ const Dashboard = () => {
   const statistics = calculateStatistics();
   const countryName = countries.find(c => c.code === selectedCountry)?.name || '';
 
+  // Handle manual selection of a match
+  const handleSelectMatch = (resultId, match) => {
+    // Find the result by ID
+    const updatedResults = results.map(result => {
+      if (result.id === resultId) {
+        // Update the bestMatch with the selected match
+        return {
+          ...result,
+          bestMatch: match
+        };
+      }
+      return result;
+    });
+    
+    // Update results state
+    setResults(updatedResults);
+    
+    // Show success message
+    toast.success(`Critère "${match.name}" sélectionné comme meilleur match.`);
+  };
+
+  // Handle deletion of results
+  const handleDeleteResults = (resultIds) => {
+    // Filter out the results to be deleted
+    const updatedResults = results.filter(result => !resultIds.includes(result.id));
+    
+    // Update results state
+    setResults(updatedResults);
+    
+    // Update project results in the database
+    if (currentProject && currentProject._id) {
+      updateProjectResults(currentProject._id, updatedResults);
+    }
+    
+    // Show success message
+    if (resultIds.length === 1) {
+      toast.success('Résultat supprimé avec succès.');
+    } else {
+      toast.success(`${resultIds.length} résultats supprimés avec succès.`);
+    }
+  };
+
+  // Update project results in the database
+  const updateProjectResults = async (projectId, updatedResults) => {
+    try {
+      await axios.post(`/api/projects/${projectId}/results`, {
+        results: updatedResults,
+        country: selectedCountry,
+        categories: selectedCategories.map(id => {
+          const category = categories.find(c => c.id === id);
+          return category ? category.name : id;
+        })
+      });
+    } catch (error) {
+      console.error('Error updating project results:', error);
+      toast.error('Erreur lors de la mise à jour des résultats.');
+    }
+  };
+
   // Component rendering
   return (
     <Container fluid className="py-4">
@@ -387,7 +446,12 @@ const Dashboard = () => {
       {/* Main content */}
       {processStep === 'done' && results.length > 0 ? (
         // Display results
-        <ResultsTable results={results} selectedCountry={selectedCountry} />
+        <ResultsTable 
+          results={results} 
+          selectedCountry={selectedCountry} 
+          onSelectMatch={handleSelectMatch}
+          onDeleteResults={handleDeleteResults}
+        />
       ) : (
         // Search interface
         <>
