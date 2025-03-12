@@ -5,9 +5,10 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-// Constants
-const SOPRISM_BASE_URL = process.env.SOPRISM_API_URL || 'https://api.soprism.com';
-const SOPRISM_AUTH_ENDPOINT = '/auth/token';
+// Default base URL
+let SOPRISM_BASE_URL = process.env.SOPRISM_API_URL || 'https://api.soprism.com';
+
+// API endpoints
 const SOPRISM_UPLOAD_ENDPOINT = '/universe/upload';
 const SOPRISM_CREATE_UNIVERSE_ENDPOINT = '/universe/create';
 
@@ -16,28 +17,12 @@ const SOPRISM_CREATE_UNIVERSE_ENDPOINT = '/universe/create';
  */
 const soprismService = {
   /**
-   * Authenticate with Soprism API
-   * @param {string} username - Soprism username
-   * @param {string} password - Soprism password
-   * @returns {Promise<Object>} - Authentication result with token
+   * Set the API base URL
+   * @param {string} url - New base URL for the API
    */
-  authenticate: async (username, password) => {
-    try {
-      const response = await axios.post(`${SOPRISM_BASE_URL}${SOPRISM_AUTH_ENDPOINT}`, {
-        username,
-        password
-      });
-      
-      if (!response.data || !response.data.token) {
-        throw new Error('Authentication failed: No token received');
-      }
-      
-      return {
-        token: response.data.token
-      };
-    } catch (error) {
-      console.error('Error authenticating with Soprism:', error.response?.data || error.message);
-      throw new Error('Authentication failed: ' + (error.response?.data?.message || error.message));
+  setApiUrl: (url) => {
+    if (url) {
+      SOPRISM_BASE_URL = url;
     }
   },
   
@@ -70,11 +55,11 @@ const soprismService = {
         const category = result.category || result.categoryPath || '';
         
         worksheet.addRow({
-          name: result.criterion,
+          name: result.name,
           category: category,
-          meta_id: result.bestMatch ? result.bestMatch.id : '',
-          audience_size: result.bestMatch ? result.bestMatch.audience_size : 0,
-          meta_name: result.bestMatch ? result.bestMatch.name : ''
+          meta_id: result.meta_id || '',
+          audience_size: result.audience_size || 0,
+          meta_name: result.meta_name || ''
         });
       });
       
