@@ -18,7 +18,8 @@
     "facebook",
     "openai",
     "targeting",
-    "marketing"
+    "marketing",
+    "soprism"
   ],
   "author": "",
   "license": "MIT",
@@ -28,9 +29,12 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "exceljs": "^4.3.0",
     "express": "^4.18.2",
+    "form-data": "^4.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
+    "multer": "^1.4.5-lts.1",
     "openai": "^4.20.0",
     "react-router-dom": "^7.3.0",
     "similarity": "^1.2.1",
