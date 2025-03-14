@@ -33,8 +33,8 @@ const ProjectSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['En cours', 'Terminé', 'En attente'],
-    default: 'En cours'
+    enum: ['In Progress', 'Completed', 'Pending'],
+    default: 'In Progress'
   },
   targetAudience: {
     type: String,

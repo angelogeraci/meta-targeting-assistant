@@ -22,7 +22,7 @@ const Projects = () => {
   const [currentProject, setCurrentProject] = useState({
     name: '',
     description: '',
-    status: 'En cours'
+    status: 'In Progress'
   });
 
   // Load projects when component mounts
@@ -31,24 +31,64 @@ const Projects = () => {
       fetchProjects();
     } else {
       setLoading(false);
-      setError('Vous devez être connecté pour voir vos projets.');
+      setError('You must be logged in to view your projects.');
     }
   }, [isAuthenticated]);
 
-  // Function to fetch projects
+  // Fetch projects from API
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      console.log('Fetching projects with auth headers:', axios.defaults.headers.common['Authorization']);
-      const response = await axios.get('/api/projects');
-      setProjects(response.data);
       setError(null);
-    } catch (err) {
-      console.error('Error fetching projects:', err.response?.data || err.message);
-      if (err.response?.status === 401) {
-        setError('Vous devez être connecté pour voir vos projets.');
+      
+      // Vérifier si l'utilisateur est authentifié
+      if (!isAuthenticated()) {
+        console.log('Attempting to fetch projects without authentication');
+        setLoading(false);
+        setError('You must be logged in to view your projects.');
+        return;
+      }
+      
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem('token');
+      console.log('Authentication token present for fetchProjects:', !!token);
+      
+      // Configurer les en-têtes avec le token
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      };
+      
+      console.log('Fetching projects with config:', config);
+      
+      const response = await axios.get('/api/projects', config);
+      console.log('Projects retrieved:', response.data);
+      
+      if (Array.isArray(response.data)) {
+        setProjects(response.data);
       } else {
-        setError('Impossible de charger les projets. Veuillez réessayer plus tard.');
+        console.error('Unexpected response format:', response.data);
+        setError('Incorrect data format received from server');
+      }
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+      
+      if (err.response) {
+        console.error('Error status:', err.response.status);
+        console.error('Error data:', err.response.data);
+        
+        if (err.response.status === 401) {
+          setError('Session expired. Please log in again.');
+        } else {
+          setError(`Unable to retrieve projects: ${err.response.data.message || 'Server error'}`);
+        }
+      } else if (err.request) {
+        console.error('Request error - no response received:', err.request);
+        setError('Unable to communicate with the server. Check your internet connection.');
+      } else {
+        console.error('Error configuring the request:', err.message);
+        setError(`Error: ${err.message}`);
       }
     } finally {
       setLoading(false);
@@ -69,7 +109,7 @@ const Projects = () => {
     const [localProject, setLocalProject] = useState({
       name: currentProject.name,
       description: currentProject.description,
-      status: currentProject.status || 'En cours'
+      status: currentProject.status || 'In Progress'
     });
 
     // Mettre à jour l'état local lors de la saisie
@@ -127,7 +167,7 @@ const Projects = () => {
     e.preventDefault();
     
     if (!isAuthenticated()) {
-      toast.error('Vous devez être connecté pour créer un projet.');
+      toast.error('You must be logged in to create a project.');
       return;
     }
     
@@ -135,7 +175,7 @@ const Projects = () => {
       // Utiliser les données du formulaire directement
       const projectToCreate = {
         ...formData,
-        status: 'En cours', // Utiliser la valeur acceptée par le modèle
+        status: 'In Progress', // Utiliser la valeur acceptée par le modèle
         user: currentUser?.id // S'assurer que l'ID de l'utilisateur est inclus
       };
       
@@ -145,12 +185,12 @@ const Projects = () => {
       const response = await axios.post('/api/projects', projectToCreate);
       const createdProject = response.data;
       
-      toast.success('Projet créé avec succès!');
+      toast.success('Project created successfully!');
       setShowCreateModal(false);
       setCurrentProject({
         name: '',
         description: '',
-        status: 'En cours'
+        status: 'In Progress'
       });
       fetchProjects();
       
@@ -159,9 +199,9 @@ const Projects = () => {
     } catch (err) {
       console.error('Error creating project:', err.response?.data || err.message);
       if (err.response?.status === 401) {
-        toast.error('Vous devez être connecté pour créer un projet.');
+        toast.error('You must be logged in to create a project.');
       } else {
-        toast.error(err.response?.data?.message || 'Impossible de créer le projet. Veuillez réessayer plus tard.');
+        toast.error(err.response?.data?.message || 'Unable to create the project. Please try again later.');
       }
     }
   };
@@ -177,22 +217,75 @@ const Projects = () => {
       });
       setShowEditModal(false);
       fetchProjects();
-      toast.success('Projet mis à jour avec succès!');
+      toast.success('Project updated successfully!');
     } catch (err) {
       console.error('Error updating project:', err);
-      toast.error('Impossible de mettre à jour le projet. Veuillez réessayer plus tard.');
+      toast.error('Unable to update the project. Please try again later.');
     }
   };
 
   // Delete a project
   const handleDeleteProject = async () => {
     try {
-      await axios.delete(`/api/projects/${currentProject._id}`);
+      console.log('Attempting to delete project with ID:', currentProject._id);
+      
+      // Vérifier si l'utilisateur est authentifié
+      if (!isAuthenticated()) {
+        console.error('User not authenticated during deletion attempt');
+        toast.error('You must be logged in to delete a project.');
+        setShowDeleteModal(false);
+        return;
+      }
+      
+      // Récupérer le token d'authentification
+      const token = localStorage.getItem('token');
+      console.log('Authentication token present:', !!token);
+      
+      // Configurer les en-têtes avec le token
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      };
+      
+      console.log('Request configuration:', config);
+      console.log('Delete URL:', `/api/projects/${currentProject._id}`);
+      
+      // Envoyer la requête de suppression
+      const response = await axios.delete(`/api/projects/${currentProject._id}`, config);
+      
+      console.log('Delete response:', response.data);
+      
       setShowDeleteModal(false);
+      toast.success('Project deleted successfully!');
       fetchProjects();
     } catch (err) {
-      console.error('Error deleting project:', err);
-      setError('Unable to delete project. Please try again later.');
+      console.error('Complete error during deletion:', err);
+      
+      if (err.response) {
+        console.error('Error status:', err.response.status);
+        console.error('Error data:', err.response.data);
+        
+        // Gérer les différents codes d'erreur
+        if (err.response.status === 401) {
+          toast.error('Session expired. Please log in again.');
+        } else if (err.response.status === 403) {
+          toast.error('You are not authorized to delete this project.');
+        } else if (err.response.status === 404) {
+          toast.error('Project not found. It may have already been deleted.');
+          setShowDeleteModal(false);
+          fetchProjects(); // Rafraîchir la liste
+        } else {
+          toast.error(`Unable to delete the project: ${err.response.data.message || 'Server error'}`);
+        }
+      } else if (err.request) {
+        console.error('Request error - no response received:', err.request);
+        toast.error('Unable to communicate with the server. Check your internet connection.');
+      } else {
+        console.error('Error configuring the request:', err.message);
+        toast.error(`Error: ${err.message}`);
+      }
     }
   };
 

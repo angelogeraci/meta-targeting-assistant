@@ -83,9 +83,17 @@ router.post('/export', auth, async (req, res) => {
       name: universeName,
       country_ref: countryRef,
       description: description || `MTA Universe ${new Date().toLocaleDateString()}`,
-      exclude_default: excludeDefault || false,
-      avoid_duplicates: avoidDuplicates !== false, // Default to true if not specified
+      exclude_default: excludeDefault === true,
+      avoid_duplicates: avoidDuplicates === true
     }, token);
+    
+    console.log('Universe creation parameters:', {
+      fileName: fileUploadResult.fileName,
+      name: universeName,
+      country_ref: countryRef,
+      exclude_default: excludeDefault === true,
+      avoid_duplicates: avoidDuplicates === true
+    });
     
     res.json({
       success: true,
@@ -96,6 +104,41 @@ router.post('/export', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Soprism export error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Export failed'
+    });
+  }
+});
+
+/**
+ * @route POST /api/soprism/export-xls
+ * @desc Export data to XLS file with Soprism structure
+ * @access Private
+ */
+router.post('/export-xls', auth, async (req, res) => {
+  try {
+    const { results } = req.body;
+    
+    // Validate required parameters
+    if (!results || !Array.isArray(results) || results.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No results to export'
+      });
+    }
+    
+    // Generate Excel file in memory
+    const excelBuffer = await soprismService.generateExcelFile(results);
+    
+    // Set response headers for file download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=soprism_export_${Date.now()}.xlsx`);
+    
+    // Send the buffer as response
+    res.send(excelBuffer);
+  } catch (error) {
+    console.error('XLS export error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'Export failed'

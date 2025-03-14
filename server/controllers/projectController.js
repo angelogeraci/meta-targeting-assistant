@@ -6,8 +6,8 @@ exports.getProjects = async (req, res) => {
     const projects = await Project.find({ user: req.user.id }).sort({ createdAt: -1 });
     res.json(projects);
   } catch (error) {
-    console.error('Erreur lors de la récupération des projets:', error.message);
-    res.status(500).json({ message: 'Erreur serveur' });
+    console.error('Error retrieving projects:', error.message);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -20,16 +20,16 @@ exports.getProjectById = async (req, res) => {
     });
 
     if (!project) {
-      return res.status(404).json({ message: 'Projet non trouvé' });
+      return res.status(404).json({ message: 'Project not found' });
     }
 
     res.json(project);
   } catch (error) {
-    console.error('Erreur lors de la récupération du projet:', error.message);
+    console.error('Error retrieving project:', error.message);
     if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Projet non trouvé' });
+      return res.status(404).json({ message: 'Project not found' });
     }
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -42,7 +42,7 @@ exports.createProject = async (req, res) => {
     if (!name) {
       return res.status(400).json({
         success: false,
-        message: 'Le nom du projet est requis'
+        message: 'Project name is required'
       });
     }
     
@@ -50,14 +50,14 @@ exports.createProject = async (req, res) => {
     if (!req.user || !req.user.id) {
       return res.status(401).json({
         success: false,
-        message: 'Utilisateur non authentifié'
+        message: 'User not authenticated'
       });
     }
 
     // Créer le projet avec les données fournies
     const projectData = {
       ...req.body,
-      status: req.body.status || 'En cours',
+      status: req.body.status || 'In Progress',
       user: req.user.id
     };
 
@@ -66,8 +66,8 @@ exports.createProject = async (req, res) => {
     
     res.status(201).json(project);
   } catch (error) {
-    console.error('Erreur lors de la création du projet:', error);
-    res.status(500).json({ message: 'Erreur lors de la création du projet', error: error.message });
+    console.error('Error creating project:', error);
+    res.status(500).json({ message: 'Error creating project', error: error.message });
   }
 };
 
@@ -93,7 +93,7 @@ exports.updateProject = async (req, res) => {
     });
 
     if (!project) {
-      return res.status(404).json({ message: 'Projet non trouvé' });
+      return res.status(404).json({ message: 'Project not found' });
     }
 
     // Mettre à jour le projet
@@ -105,34 +105,69 @@ exports.updateProject = async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du projet:', error.message);
+    console.error('Error updating project:', error.message);
     if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Projet non trouvé' });
+      return res.status(404).json({ message: 'Project not found' });
     }
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
 // Supprimer un projet
 exports.deleteProject = async (req, res) => {
   try {
-    const project = await Project.findOne({ 
-      _id: req.params.id,
-      user: req.user.id
-    });
-
+    console.log('Attempting to delete project:', req.params.id);
+    console.log('Authenticated user:', req.user.id);
+    
+    // Vérifier si l'ID du projet est valide
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      console.log('Invalid project ID:', req.params.id);
+      return res.status(400).json({ message: 'Invalid project ID' });
+    }
+    
+    // Vérifier d'abord si le projet existe
+    const project = await Project.findById(req.params.id);
+    
     if (!project) {
-      return res.status(404).json({ message: 'Projet non trouvé' });
+      console.log('Project not found');
+      return res.status(404).json({ message: 'Project not found' });
+    }
+    
+    console.log('Project found:', project);
+    console.log('Project owner:', project.user);
+    
+    // Convertir les IDs en chaînes pour une comparaison fiable
+    const projectUserId = project.user.toString();
+    const requestUserId = req.user.id.toString();
+    
+    console.log('Comparing IDs:', { projectUserId, requestUserId });
+    
+    // Vérifier si l'utilisateur est autorisé à supprimer ce projet
+    if (projectUserId !== requestUserId) {
+      console.log('User not authorized to delete this project');
+      return res.status(403).json({ message: 'Not authorized to delete this project' });
     }
 
-    await Project.findByIdAndRemove(req.params.id);
-    res.json({ message: 'Projet supprimé' });
-  } catch (error) {
-    console.error('Erreur lors de la suppression du projet:', error.message);
-    if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Projet non trouvé' });
+    try {
+      // Supprimer le projet
+      await Project.findByIdAndDelete(req.params.id);
+      console.log('Project deleted successfully');
+      
+      res.json({ message: 'Project deleted' });
+    } catch (deleteError) {
+      console.error('Specific error during deletion:', deleteError);
+      return res.status(500).json({ message: 'Error deleting project' });
     }
-    res.status(500).json({ message: 'Erreur serveur' });
+  } catch (error) {
+    console.error('Error deleting project:', error);
+    console.error('Error message:', error.message);
+    console.error('Stack trace:', error.stack);
+    
+    if (error.kind === 'ObjectId') {
+      return res.status(404).json({ message: 'Project not found - Invalid ID' });
+    }
+    res.status(500).json({ message: 'Server error during deletion' });
   }
 };
 
@@ -145,16 +180,16 @@ exports.getProjectResults = async (req, res) => {
     });
 
     if (!project) {
-      return res.status(404).json({ message: 'Projet non trouvé' });
+      return res.status(404).json({ message: 'Project not found' });
     }
 
     res.json(project.results || []);
   } catch (error) {
-    console.error('Erreur lors de la récupération des résultats du projet:', error.message);
+    console.error('Error retrieving project results:', error.message);
     if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Projet non trouvé' });
+      return res.status(404).json({ message: 'Project not found' });
     }
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -169,7 +204,7 @@ exports.addProjectResults = async (req, res) => {
     });
 
     if (!project) {
-      return res.status(404).json({ message: 'Projet non trouvé' });
+      return res.status(404).json({ message: 'Project not found' });
     }
 
     // Mettre à jour le projet avec les nouveaux résultats
@@ -178,7 +213,7 @@ exports.addProjectResults = async (req, res) => {
       { 
         $set: { 
           results: results,
-          status: 'Terminé',
+          status: 'Completed',
           country: country || project.country,
           categories: categories || project.categories,
           updatedAt: Date.now()
@@ -189,10 +224,10 @@ exports.addProjectResults = async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    console.error('Erreur lors de l\'ajout des résultats au projet:', error.message);
+    console.error('Error adding project results:', error.message);
     if (error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Projet non trouvé' });
+      return res.status(404).json({ message: 'Project not found' });
     }
-    res.status(500).json({ message: 'Erreur serveur' });
+    res.status(500).json({ message: 'Server error' });
   }
 };

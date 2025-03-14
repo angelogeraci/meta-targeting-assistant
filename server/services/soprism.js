@@ -76,6 +76,49 @@ const soprismService = {
   },
   
   /**
+   * Generate Excel file from results without uploading to Soprism
+   * @param {Array} results - Formatted results
+   * @returns {Promise<Buffer>} - Excel file buffer
+   */
+  generateExcelFile: async (results) => {
+    try {
+      // Create Excel workbook in memory
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Universe Import');
+      
+      // Add headers based on the Soprism template format
+      worksheet.columns = [
+        { header: 'Path', key: 'path', width: 60 },
+        { header: 'Name', key: 'name', width: 30 },
+        { header: 'Category', key: 'category', width: 30 },
+        { header: 'Exclusions', key: 'exclusions', width: 15 },
+        { header: 'Level 1', key: 'level1', width: 30 }
+      ];
+      
+      // Add rows - format according to the structure
+      results.forEach(result => {
+        const category = result.category || result.categoryPath || '';
+        const name = result.name || result.criterion || '';
+        const path = result.fullPath || `Brands relationship -- ${category} -- ${name}`;
+        
+        worksheet.addRow({
+          path: path,
+          name: name,
+          category: category,
+          exclusions: '', // Colonne vide pour le moment
+          level1: name // Level 1 correspond à l'intérêt (même valeur que Name)
+        });
+      });
+      
+      // Generate buffer
+      return await workbook.xlsx.writeBuffer();
+    } catch (error) {
+      console.error('Error generating Excel file:', error);
+      throw new Error('Excel file generation failed: ' + error.message);
+    }
+  },
+  
+  /**
    * Generate Excel file from results and upload to Soprism
    * @param {Array} results - Formatted results
    * @param {string} token - Authentication token (optional if environment variables are set)
@@ -98,23 +141,25 @@ const soprismService = {
       
       // Add headers based on the corrected Soprism template format
       worksheet.columns = [
+        { header: 'Path', key: 'path', width: 60 },
         { header: 'Name', key: 'name', width: 30 },
         { header: 'Category', key: 'category', width: 30 },
-        { header: 'Meta ID', key: 'meta_id', width: 20 },
-        { header: 'Audience Size', key: 'audience_size', width: 15 },
-        { header: 'Meta Name', key: 'meta_name', width: 30 }
+        { header: 'Exclusions', key: 'exclusions', width: 15 },
+        { header: 'Level 1', key: 'level1', width: 30 }
       ];
       
       // Add rows - format according to the new structure
       results.forEach(result => {
         const category = result.category || result.categoryPath || '';
+        const name = result.name || result.criterion || '';
+        const path = result.fullPath || `Brands relationship -- ${category} -- ${name}`;
         
         worksheet.addRow({
-          name: result.name,
+          path: path,
+          name: name,
           category: category,
-          meta_id: result.meta_id || '',
-          audience_size: result.audience_size || 0,
-          meta_name: result.meta_name || ''
+          exclusions: '', // Colonne vide pour le moment
+          level1: name // Level 1 correspond à l'intérêt (même valeur que Name)
         });
       });
       
@@ -193,9 +238,11 @@ const soprismService = {
         name: universeConfig.name,
         country_ref: universeConfig.country_ref,
         description: universeConfig.description,
-        exclude_default: universeConfig.exclude_default ? true : false,
-        avoid_duplicates: universeConfig.avoid_duplicates ? true : false
+        exclude_default: universeConfig.exclude_default === true,
+        avoid_duplicates: universeConfig.avoid_duplicates === true
       };
+      
+      console.log('Formatted config for Soprism API:', formattedConfig);
       
       const response = await axios.post(
         `${SOPRISM_BASE_URL}${SOPRISM_CREATE_UNIVERSE_ENDPOINT}`,
